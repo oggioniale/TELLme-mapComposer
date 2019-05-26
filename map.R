@@ -1,4 +1,5 @@
-library(mapview)
+library(leaflet.extras)
+
 TELLmeMapL <- leaflet() %>%
   addTiles() %>%
   addMouseCoordinates() %>%
