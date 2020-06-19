@@ -11,7 +11,6 @@ require(rvest)
 require(stringr)
 require(purrr)
 
-
 source("accounts_private.R")
 
 getGlossary <- function() {
@@ -275,5 +274,7 @@ glossary$perspectivesByPackageId(1) %>% dtplyr::lazy_dt() %>% dplyr::left_join(g
 glossary$perspectivesByPackageId(1) %>% dplyr::left_join(glossary$dt_Dynamics() %>% as_tibble())
 
 # bea
-glossary$beanFromDynamicId(11)
+glossary$beanFromDynamicId(11) %>% as_tibble() %>% View()
+
+glossary$beanFromPerspectiveId()
 }
