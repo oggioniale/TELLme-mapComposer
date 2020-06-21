@@ -22,10 +22,10 @@ tableMetropolisWikiData <- WikidataQueryServiceR::query_wikidata(
 # TODO add views parameters, geometry
 dt_Metropolis <- tableMetropolisWikiData %>% filter(cityLabel %in% c('Buenos Aires', 'Guadalajara', 'Seville', 'Milan'))
 dt_Metropolis <- dt_Metropolis %>% 
-  add_row(city = '', cityLabel = 'All metropolis', gps = 'Point(0, 0)', OSM_relation_ID = 0, .before = 1) %>% 
+  add_row(city = '', cityLabel = 'All metropolis', gps = 'Point(0 0)', OSM_relation_ID = 0, .before = 1) %>% 
   add_row(city = 'https://www.wikidata.org/wiki/Q1010', cityLabel = 'Maribor', gps = 'Point(15.64667 46.55472)', OSM_relation_ID = 8154489) %>%
   add_row(city = 'https://www.wikidata.org/wiki/Q1489', cityLabel = 'Mexico City', gps = 'Point(-99.12766 19.42847)', OSM_relation_ID = 1376330)
-citiesGPS <- sf::st_as_sf(dt_Metropolis, wkt = 'gps')
+citiesGPS <- sf::st_as_sf(dt_Metropolis[c(2:7),], wkt = 'gps')
 sf::st_crs(citiesGPS) = 4326
 
 ### City multipolygons
