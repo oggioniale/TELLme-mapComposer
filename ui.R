@@ -23,9 +23,15 @@ navbarPage("TELLme Dynamics/Perspective",
                                       h2("Filter metropolis:"),
                                       selectizeInput('cities',
                                                      label = 'Metropolis', 
-                                                     choices = tableMetropolis['cityLabel'],
+                                                     choices = dt_Metropolis['cityLabel'],
                                                      multiple = FALSE,
-                                                     selected = tableMetropolis[1,]['cityLabel']
+                                                     selected = dt_Metropolis[1,]['cityLabel']
+                                      ),
+                                      selectizeInput('semPackage',
+                                                     label = 'Semantic Package',
+                                                     choices = dt_Metropolis['cityLabel'], # listAlbum,
+                                                     multiple = FALSE,
+                                                     selected = dt_Metropolis[1,]['cityLabel']
                                       )
                         )
                     )
