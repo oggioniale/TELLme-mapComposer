@@ -55,8 +55,9 @@ sf::st_crs(citiesGPS) = 4326
 #     osmdata::osmdata_sf()
 # names(cityBoundaryResultMexicoCity$osm_multipolygons$geometry[[1]][[1]]) <- NULL
 metropolis  <- sf::st_read(
-  "cityGeojson/metropolis.shp")
+  "cityGeojson/metropolis.gpkg")
 
+#sf::st_write(metropolis,"cityGeojson/metropolis.gpkg")
 
 
 
