@@ -1,19 +1,22 @@
-require(jqr)
-require(httr)
-require(dplyr)
-require(jsonlite)
-require(openssl)
-#install.packages('dtplyr')
-require(dtplyr)
-
-# packages for web scraping
-require(rvest)
-require(stringr)
-require(purrr)
+# require(jqr)
+# require(httr)
+# require(dplyr)
+# require(jsonlite)
+# require(openssl)
+# #install.packages('dtplyr')
+# require(dtplyr)
+# 
+# # packages for web scraping
+# require(rvest)
+# require(stringr)
+# require(purrr)
 
 source("accounts_private.R")
 
 getGlossary <- function(read_online=TRUE) {
+  require(jqr);require(httr);require(dplyr);require(jsonlite)
+  require(openssl);require(dtplyr);require(rvest);require(stringr);require(purrr)
+  
   # funtional object factory
   # self is the final return value: it is an "instance" exposing internals.
   # To refresh the object instance use the exposed "refresh" method.
@@ -240,7 +243,7 @@ getGlossary <- function(read_online=TRUE) {
       dplyr::left_join(dt_Issues %>% dplyr::select(issue_id, issue_title) ) %>% 
       dplyr::mutate(packageTitle=paste(issue_title,scale)) %>% 
       #rename(package_scale=scale, package_metropolis=metropolis, dynamic_conceptCount=conceptCount) %>% 
-      dplyr::select(dynamic_id, dynamic_title, issue_id, packageTitle, package_scale=scale, package_metropolis=metropolis, dynamic_conceptCount=conceptCount, issue_title)
+      dplyr::select(dynamic_id, dynamic_title, dynamic_conceptCount=conceptCount, package_id, packageTitle, package_scale=scale, package_metropolis=metropolis, issue_id, issue_title)
     
     rm(jj)
   }
@@ -266,19 +269,38 @@ getGlossary <- function(read_online=TRUE) {
   self$m2m_IssuesSemanticPackages<-function(){m2m_IssuesSemanticPackages}
   self$mm2mm_DynamicsSemanticPackagesIssues<-function(){mm2mm_DynamicsSemanticPackagesIssues}
   
-  self$semanticPackagesByMetropolisName<-function(metropolisName){
-    m2m_IssuesSemanticPackages %>% 
-      dplyr::filter(str_detect(metropolis,fixed(!!metropolisName, ignore_case=TRUE))) %>% 
-      dplyr::mutate(package_id, title=paste(issue_title, scale)) %>% 
-      dplyr::select(-issue_id, -issue_title) 
+  # self$semanticPackagesByMetropolisName<-function(metropolisName){
+  #   m2m_IssuesSemanticPackages %>% 
+  #     dplyr::filter(str_detect(metropolis,fixed(!!metropolisName, ignore_case=TRUE))) %>% 
+  #     dplyr::mutate(package_id, title=paste(issue_title, scale)) %>% 
+  #     dplyr::select(-issue_id, -issue_title) 
+  # }
+  
+  self$dynamicsByMetropolisName<-function(metropolisName){
+    mm2mm_DynamicsSemanticPackagesIssues %>% 
+      dplyr::filter(str_detect(package_metropolis,fixed(!!metropolisName, ignore_case=TRUE)))
   }
   
-  self$perspectivesByPackageId<-perspectivesByPackageId
+  self$perspectivesByDynamic<-function(dyn_id){
+    # NOTE: the result of a table with 0 rows, means that the dynamic has no perspective: one can know it in advance
+    # by inspecting the "dynamic_conceptCount" column of the mm2mm_DynamicsSemanticPackagesIssues table
+    packageID<- dt_Dynamics %>% 
+      dplyr::filter(dynamic_id==!!dyn_id) %>% 
+      dplyr::select(package_id) %>% 
+      as_tibble() %>% as.integer()
+    perspectivesByPackageId(packageID) %>% 
+      #dplyr::filter( !is.na(perspective_id)) %>% 
+      dplyr::filter(dynamic_id==!!dyn_id) 
+  }
+  
+  # do not export the method by perspective by package: it is confusing. We use it only internally
+  #self$perspectivesByPackageId<-perspectivesByPackageId
+  
   self$beanFromDynamicId<-fagioloneWebByDynamicId
   self$beanFromPerspectiveId<-fagioloneWebByPerspectiveId
     
   self$refresh<-init
-  # sets internal variable read_online, in order to be able to change it in the instance
+  # sets internal variable read_online, in order to be able to change it in the instance at runtime
   self$setOnline<-function(online=TRUE){
     read_online<<-online
   }
@@ -327,13 +349,42 @@ glossary$beanFromPerspectiveId()
 
 # step 1: given a metropolis name obtain the available semantic packages (at differente scales)
 metropolis = "guadalajara"
-glossary$semanticPackagesByMetropolisName(metropolisName = metropolis)
+#glossary$semanticPackagesByMetropolisName(metropolisName = metropolis)
 
-glossary$mm2mm_DynamicsSemanticPackagesIssues() %>% 
-  dplyr::filter(str_detect(package_metropolis,fixed(metropolis, ignore_case=TRUE))) 
+# glossary$mm2mm_DynamicsSemanticPackagesIssues() %>% 
+#   dplyr::filter(str_detect(package_metropolis,fixed(metropolis, ignore_case=TRUE))) 
+
+# ---> @Ale: proposal: go directly to the list of all dynamics for the given city. The resulting table contains all the information
+#  for the semanticPackage and the issue (dynamic is at the end of the hierarchy among these entities) <-----
+glossary$dynamicsByMetropolisName(metropolis)
 
 # step 2: given one semantic package (its package_id is present in the last table) obtain its "bean"
-glossary$perspectivesByPackageId(3) 
+#glossary$perspectivesByPackageId(3) 
+
+#  chosen one dynamic by id we must:
+#  lookup its package, get all the perspective-dynamic in the package (remember that one must filter by dynamic once obtained the whole set of perspectives by package), collect their ids
+#  ask one by one for their bean (bean of the dynamic and beans of its composing perspectives).
+# like this (then I will refactor within the same glossary object)
+#glossary$beanFromDynamicId(dyn_id)
+# all_perspectives_of_dynamic<-function(dyn_id){
+#   glossary$dt_Dynamics() %>% 
+#     dplyr::filter(dynamic_id==!!dyn_id) %>% 
+#     dplyr::select(package_id) %>% 
+#     as_tibble() %>% as.integer() %>% 
+#     glossary$perspectivesByPackageId() #%>% 
+#   dplyr::filter( !is.na(perspective_id)) %>% 
+#     dplyr::filter(dynamic_id==!!dyn_id) 
+# }
+# 
+# all_perspectives_of_dynamic(13)
+# all_perspectives_of_dynamic(17)
+# all_perspectives_of_dynamic(18)
+# all_perspectives_of_dynamic(21)
+glossary$perspectivesByDynamic(13)
+
+
+  
+### NO: here we need something different (see the "TODO" some line below) ###
 # -> dynamic_id, dynamic_title, perspective_id, perspective_title
 # NOTE A: 
 #   when you cannot see any perspective_id, it means that no perspective is available for the corresponding dynamic (hence, all the concepts in the bean will be "off")
@@ -348,21 +399,7 @@ beanDyn11<-glossary$beanFromDynamicId(11) %>% as_tibble()
 #  beanFromDynamicId_WithPerspectives(11)
 glossary$dt_Dynamics() %>% filter(conceptCount>0) %>% as_tibble() %>% View()
 
-#glossary$beanFromDynamicId(dyn_id)
-all_perspectives_of_dynamic<-function(dyn_id){
-  glossary$dt_Dynamics() %>% 
-    filter(dynamic_id==!!dyn_id) %>% 
-    select(package_id) %>% 
-    as_tibble() %>% as.integer() %>% 
-    glossary$perspectivesByPackageId() %>% 
-    filter( !is.na(perspective_id)) %>% 
-    filter(dynamic_id==!!dyn_id) 
-    
-}
-all_perspectives_of_dynamic(13)
-all_perspectives_of_dynamic(17)
-all_perspectives_of_dynamic(18)
-all_perspectives_of_dynamic(21)
+
 
 glossary$dt_Dynamics() %>% 
   left_join(glossary$dt_SemanticPackages()) %>% 
@@ -395,5 +432,9 @@ glossary$mm2mm_DynamicsSemanticPackagesIssues()
 beanDyn11 %>% filter(selected==TRUE)
 
 glossary$dt_SemanticPackages() %>% select(metropolis) %>% unique() %>% as_tibble()
+glossary$semanticPackagesByMetropolisName("guadalajara")
+glossary$mm2mm_DynamicsSemanticPackagesIssues()
+glossary$dynamicsByMetropolisName("milan")
+
 
 }
