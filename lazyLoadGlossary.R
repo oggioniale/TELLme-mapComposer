@@ -477,18 +477,10 @@ if(FALSE){
   
 }
 if(FALSE){
-  #esempi uso in server.R
+  # #esempi uso in server.R
   metropolis="guadalajara"
-  pippa<-glossary$dynamicsByMetropolisName(metropolis) %>% as_tibble() %>% dplyr::select(packageTitle, package_id, dynamic_title, dynamic_id) %>% group_by(packageTitle, package_id) %>% 
-    tidyr::nest() %>% 
-    mutate(data_ls =map(.x = data, .f       = list)) %>% 
-    dplyr::filter(package_id==1) %>% 
-    pull(data_ls) %>% 
-    .[[1]] %>% 
-    .[[1]] 
   
-  pippa %>% pull(dynamic_id)->ripippa
-  names(ripippa)<-pippa %>% pull(dynamic_title)
-  
+  input<-glossary$dynamicsByMetropolisName(metropolis) 
+  glossary$listForDynamicsSelectize(input)
 
 }
