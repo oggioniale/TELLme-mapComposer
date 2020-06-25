@@ -330,6 +330,26 @@ getGlossary <- function(read_online=TRUE) {
       dplyr::filter(str_detect(package_metropolis,fixed(!!metropolisName, ignore_case=TRUE)))
   }
   
+  # pass to this method the result of dynamicsByMetropolisName
+  self$listForDynamicsSelectize<-function(input){
+    #input <- dynamicsByMetropolisName(metropolisName)
+    # per farlo in un solo passaggio posso creare una nuova colonna con questa funzione di appoggio
+    my_fx<-function(tb){tb$dynamic_id %>% set_names(tb$dynamic_title)}
+    
+    nested<-input %>% 
+      as_tibble() %>% 
+      dplyr::select(packageTitle, package_id, dynamic_title, dynamic_id) %>% 
+      group_by(packageTitle, package_id) %>% 
+      tidyr::nest() 
+    
+    nested_with_namedIntegerColumn<-nested %>% mutate(dd=map(data,my_fx)) 
+    
+    listaFinale<-
+      nested_with_namedIntegerColumn %>% pull(dd) %>% set_names(nested_with_namedIntegerColumn %>% pull(packageTitle) )
+    
+    return(listaFinale)
+  }
+  
   # do not export the method by perspective by package: it is confusing. We use it only internally
   #self$perspectivesByPackageId<-perspectivesByPackageId # DEPRECATED export
   self$perspectivesByDynamicId<-perspectivesByDynamicId
@@ -455,4 +475,20 @@ if(FALSE){
   glossary$dynamicsByMetropolisName("milan")
   
   
+}
+if(FALSE){
+  #esempi uso in server.R
+  metropolis="guadalajara"
+  pippa<-glossary$dynamicsByMetropolisName(metropolis) %>% as_tibble() %>% dplyr::select(packageTitle, package_id, dynamic_title, dynamic_id) %>% group_by(packageTitle, package_id) %>% 
+    tidyr::nest() %>% 
+    mutate(data_ls =map(.x = data, .f       = list)) %>% 
+    dplyr::filter(package_id==1) %>% 
+    pull(data_ls) %>% 
+    .[[1]] %>% 
+    .[[1]] 
+  
+  pippa %>% pull(dynamic_id)->ripippa
+  names(ripippa)<-pippa %>% pull(dynamic_title)
+  
+
 }
