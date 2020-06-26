@@ -74,6 +74,8 @@ getGlossary <- function(read_online=TRUE) {
     m2m_DynamicsConcepts<-NULL
     m2m_IssuesSemanticPackages<-NULL
     mm2mm_DynamicsSemanticPackagesIssues<-NULL
+    
+    dynamicBeanWithPerspectives_tibble<-list()
   }# internal variables
   
   # jq queries
@@ -239,34 +241,46 @@ getGlossary <- function(read_online=TRUE) {
   # e.g.
   #perspectivesByPackageId(21)
   
-  # (connects to server)
-  beanWithPerspectivesByDynamicId_tibble<-function(dyn_id){
+  # (connects to server if bean is not loaded yet or if refresh=TRUE)
+  beanWithPerspectivesByDynamicId_tibble<-function(dyn_id, refresh=FALSE){
     require(tidyr);require(dplyr);require(purrr)
-    # retrieve character vector of perspective ids
-    idsVect<-perspectivesByDynamicId(dyn_id) %>% 
-      dplyr::select(perspective_id) %>% as.vector() %>% unlist() %>% as.numeric() %>% as.character()
-    # obtain all the the perspective beans and join them naming "selectedByPerspective.X" the column from bean X
-    listOfPerspectiveBeans=list()
-    for(i in idsVect){
-      #  cat(print(paste0("\n:",i)))
-      selColname=paste0("selectedByPerspective.",i)
-      listOfPerspectiveBeans[[i]]<-beanFromPerspectiveId(i) %>% as_tibble() %>% 
-        tidyr::replace_na(list(selected=0)) %>% 
-        dplyr::select(concept_id=id, concept_title=title, !!selColname:=selected) 
-      #tibble  glossary$beanFromPerspectiveId(i)
+    sdyn_id<-dyn_id %>% as.character()
+    if(refresh || is.null(dynamicBeanWithPerspectives_tibble[[sdyn_id]])){
+      
+      message(paste0("...lazy loading bean for dynamic ",sdyn_id))
+      
+      # retrieve character vector of perspective ids
+      idsVect<-perspectivesByDynamicId(dyn_id) %>% 
+        dplyr::select(perspective_id) %>% as.vector() %>% unlist() %>% as.numeric() %>% as.character()
+      # obtain all the the perspective beans and join them naming "selectedByPerspective.X" the column from bean X
+      listOfPerspectiveBeans=list()
+      for(i in idsVect){
+        #  cat(print(paste0("\n:",i)))
+        selColname=paste0("selectedByPerspective.",i)
+        listOfPerspectiveBeans[[i]]<-beanFromPerspectiveId(i) %>% as_tibble() %>% 
+          tidyr::replace_na(list(selected=0)) %>% 
+          dplyr::select(concept_id=id, concept_title=title, !!selColname:=selected) 
+        #tibble  glossary$beanFromPerspectiveId(i)
+      }
+      # create one new column (corresponding to the whole "dynamic" selected column) counting how many times the 
+      # concept is selected (i.e. summing the "1"s in the "selectedByPerspective.X" columns)
+      
+      dynamicBeanWithPerspectives_tibble[[sdyn_id]]<<-
+        listOfPerspectiveBeans %>% 
+        purrr::reduce(dplyr::left_join, by=c("concept_id", "concept_title")) %>% 
+        dplyr::group_by(concept_id, concept_title) %>% 
+        tidyr::nest() %>% # ora sommo ogni elemento in "data":
+        dplyr::mutate(is_selected=purrr::map_dbl(data,sum)) %>% 
+        tidyr::unnest() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::mutate(concept_id=as.integer(concept_id)) %>% 
+        inner_join(dt_Concepts %>% dplyr::select(-concept_title, -concept_scalesAsText) %>% as_tibble() )
+      
+      
+      rm(listOfPerspectiveBeans)
     }
-    # create one new column (corresponding to the whole "dynamic" selected column) counting how many times the 
-    # concept is selected (i.e. summing the "1"s in the "selectedByPerspective.X" columns)
-    dynamicBeanWithPerspectives_tibble<-
-      listOfPerspectiveBeans %>% 
-      purrr::reduce(dplyr::left_join, by=c("concept_id", "concept_title")) %>% 
-      dplyr::group_by(concept_id, concept_title) %>% 
-      tidyr::nest() %>% # ora sommo ogni elemento in "data":
-      dplyr::mutate(is_selected=purrr::map_dbl(data,sum)) %>% 
-      tidyr::unnest()
     
-    rm(listOfPerspectiveBeans)
-    return(dynamicBeanWithPerspectives_tibble)
+    return(dynamicBeanWithPerspectives_tibble[[sdyn_id]])
   }
   
   #######
@@ -279,8 +293,12 @@ getGlossary <- function(read_online=TRUE) {
     dt_Issues<<-do_Q(q$issues,jj)
     dt_SemanticPackages<<-do_Q(q$semanticPackages,jj)
     dt_Dynamics<<-do_Q(q$dynamics,jj)
-    dt_Concepts<<-do_Q(q$concepts,jj)
     dt_Keywords<<-do_Q(q$keywords,jj)
+    dt_Concepts<<-do_Q(q$concepts,jj) %>% 
+      dplyr::rename(concept_scalesAsText=scalesAsText) %>% 
+      dplyr::select(-entryType) %>% 
+      dplyr::inner_join(dplyr::select(.data=dt_Keywords, -entryType, -meaning, -reference)) %>% 
+      dplyr::select(concept_id, everything())
     m2m_ProtocolScaleConcepts<<-do_Q(q$m2m_ProtocolScaleConcepts,jj)
     m2m_DynamicsConcepts<<-do_Q(q$m2m_DynamicsConcepts,jj)
     
@@ -371,7 +389,7 @@ getGlossary <- function(read_online=TRUE) {
   return(self)
 }
 
-if(FALSE){
+if(!FALSE){
   # create offline object instance
   glossary <- getGlossary(read_online = FALSE)
 }
@@ -436,8 +454,8 @@ if(FALSE){
   #       moreover the "selected" column contains the number of the perspectives in which the concept is on.
   # e.g. (21 is the id of one dynamic with more than one perspective)
   # NOTE: connects to glossary software
-  glossary$beanWithPerspectivesByDynamicId_tibble(21)
   
+  glossary$beanWithPerspectivesByDynamicId_tibble(21) 
   
   # glossary$dt_Dynamics() %>% 
   #   left_join(glossary$dt_SemanticPackages()) %>% 
