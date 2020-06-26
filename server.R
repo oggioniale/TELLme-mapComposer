@@ -1,33 +1,81 @@
 function(input, output, session) {
-
+  RV <- reactiveValues(
+    selectedMetropolisID = '',
+    selectedPackageID = ''
+  )
+  
   ## Interactive Map ##########################################
   # Create the map
-  observeEvent(input$cities, {
+  observe({
     if (input$cities == 'All metropolis') {
-      shinyjs::disable('semPackage')
+      shinyjs::disable('dynamics')
       updateSelectizeInput(
         session,
-        'semPackage',
-        choices = dt_Metropolis[1,]['cityLabel'],
+        'dynamics',
+        choices = 'Select dynamics',
         server = TRUE
       )
+      
+      # TODO
+      # map <- leaflet::leafletProxy("map", session) %>%
+      #   leaflet::clearBounds()
+      
     } else if (input$cities != 'All metropolis') {
-      shinyjs::enable('semPackage')
+      shinyjs::enable('dynamics')
+      b <- glossary$dynamicsByMetropolisName(input$cities)
       updateSelectizeInput(
         session,
-        'semPackage',
-        choices = dt_Metropolis[1,]['cityLabel'],
-        server = TRUE
+        'dynamics',
+        choices = glossary$listForDynamicsSelectize(b),
+        server = TRUE,
+        selected = NULL
       )
+      
+      output$textRecord <- renderUI({
+        record <- glossary$mm2mm_DynamicsSemanticPackagesIssues() %>%
+          as_tibble() %>%
+          dplyr::filter(dynamic_id == input$dynamics)
+        if (length(record) != 0) {
+          HTML(paste0(
+            "<hr><h4>Metropolis:</h4><h4>",
+            record %>% dplyr::select(package_metropolis) %>% as.character(),
+            "</h4><br><h4>Issue:</h4><h4>",
+            record %>% dplyr::select(issue_title) %>% as.character(),
+            "</h4><br><h4>Scale:</h4><h4>",
+            record %>% dplyr::select(package_scale) %>% as.character(),
+            "</h4><br><h4>Dynamic:</h4><h4>",
+            record %>% dplyr::select(dynamic_title) %>% as.character(),
+            "</h4>"
+          ))
+        } else {
+          HTML(
+            "<hr><h4>Metropolis:</h4><h4> - </h4><br><h4>Issue:</h4><h4> - </h4><br><h4>Scale:</h4><h4> - </h4><br><h4>Dynamic:</h4><h4> - </h4>"
+          )
+        }
+      })
+      
+      # fitBound of city selected
+      selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == input$cities)
+      bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
+      map <- leaflet::leafletProxy("map", session) %>% 
+        clearMarkers() %>%
+        leaflet::addPolygons(
+          data = selectedCityPolygon, 
+          group = 'Metropolis',
+          weight = 2,
+          col = 'red', 
+          fillColor = 'red'
+        ) %>%
+        leaflet::fitBounds(bbox[1], bbox[2], bbox[3], bbox[4])
     }
   })
   
   output$map <- leaflet::renderLeaflet({
-    # Create a Progress object
-    progress <- shiny::Progress$new()
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progress$close())
-    progress$set(message = "Please wait", value = 0)
+    # # Create a Progress object
+    # progress <- shiny::Progress$new()
+    # # Make sure it closes when we exit this reactive, even if there's an error
+    # on.exit(progress$close())
+    # progress$set(message = "Please wait", value = 0)
     
     # add icons to the map
     tellmeIcons <- leaflet::makeIcon(
@@ -37,7 +85,11 @@ function(input, output, session) {
     
     map <- leaflet::leaflet(citiesGPS) %>%
       leaflet::addTiles() %>%
-      leaflet::setView(0, 0, 2) %>%
+      leaflet::setView(0, 30, zoom = 3) %>% 
+      leaflet::addLayersControl(position = 'bottomright',
+                                overlayGroups = c('Metropolis')#,
+                                # options = leaflet::layersControlOptions(collapsed = FALSE)
+      ) %>%
       leaflet::addMarkers(
         popup = paste0(
           "City: <b>", citiesGPS$cityLabel, "</b><br/>",
@@ -45,28 +97,9 @@ function(input, output, session) {
         ),
         icon = tellmeIcons,
         group = 'Metropolis'
-      ) %>% 
-      leaflet::addLayersControl(position = 'bottomright',
-                                overlayGroups = c('Metropolis'),
-                                options = leaflet::layersControlOptions(collapsed = FALSE)
-      ) %>% 
-      leaflet::addPolygons(
-        data = metropolis, 
-        group = 'Metropolis',
-        weight = 2,
-        col = 'red', 
-        fillColor = 'red')
+      )
     
-    # fitBound of phtos selected
-    # observeEvent(input$cities, {
-    #   maxLong = max(selectedCities()$GPSLongitude)
-    #   maxLat = max(selectedCities()$GPSLatitude)
-    #   minLong = min(selectedCities()$GPSLongitude)
-    #   minLat = min(selectedCities()$GPSLatitude)
-    #   mapProxy <- leaflet::leafletProxy("map")
-    #   mapProxy %>%
-    #     leaflet::fitBounds(minLong, minLat, maxLong, maxLat)
-    # })
     return(map)
   })
+  
 }

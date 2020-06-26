@@ -1,5 +1,4 @@
 library(dplyr)
-# library(WikidataQueryServiceR)
 
 ###
 # metropolis
@@ -29,33 +28,10 @@ citiesGPS <- sf::st_as_sf(dt_Metropolis[c(2:7),], wkt = 'gps')
 sf::st_crs(citiesGPS) = 4326
 
 ### City multipolygons
-# osmdata::set_overpass_url("https://overpass-api.de/api/interpreter")
-# cityBoundaryResultMilan <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultMilan$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-# cityBoundaryResultBuenoAires <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultBuenoAires$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-# cityBoundaryResultSeville <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultSeville$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-# cityBoundaryResultGuadajara <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultGuadajara$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-# cityBoundaryResultMaribor <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultMaribor$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-# cityBoundaryResultMexicoCity <- osmdata::opq_osm_id(id = dt_Metropolis[1,4], type = 'relation', open_url = FALSE) %>%
-#     osmdata::opq_string() %>%
-#     osmdata::osmdata_sf()
-# names(cityBoundaryResultMexicoCity$osm_multipolygons$geometry[[1]][[1]]) <- NULL
-metropolis  <- sf::st_read(
-  "cityGeojson/metropolis.gpkg")
+metropolisPolygons  <- sf::st_read(
+  "cityGeojson/metropolis.gpkg"
+)
+metropolisPolygons$tellmeCityLabel <- c('Buenos Aires', 'Guadalajara', 'Maribor', 'Mexico City', 'Milan', 'Seville')
 
 #sf::st_write(metropolis,"cityGeojson/metropolis.gpkg")
 
