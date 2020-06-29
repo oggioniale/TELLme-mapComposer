@@ -175,6 +175,7 @@ getGlossary <- function(read_online=TRUE) {
   # fagioloneWebByURL(dyn21url)
   
   # dynamic specific function
+  # (connects to server)
   beanFromDynamicId<-function(id){
     url=paste0("http://www.tellme.polimi.it/tellme_apps/tellme/dynamic/",id)
     fagioloneWebByURL(url)
@@ -183,6 +184,7 @@ getGlossary <- function(read_online=TRUE) {
   # beanFromDynamicId(21)
   
   # perspective specific function
+  # (connects to server)
   beanFromPerspectiveId<-function(id){
     url=paste0("http://www.tellme.polimi.it/tellme_apps/tellme/perspective/",id)
     fagioloneWebByURL(url)
@@ -245,39 +247,57 @@ getGlossary <- function(read_online=TRUE) {
   beanWithPerspectivesByDynamicId_tibble<-function(dyn_id, refresh=FALSE){
     require(tidyr);require(dplyr);require(purrr)
     sdyn_id<-dyn_id %>% as.character()
+    
+    #browser()
     if(refresh || is.null(dynamicBeanWithPerspectives_tibble[[sdyn_id]])){
       
-      message(paste0("...lazy loading bean for dynamic ",sdyn_id))
+      idsVect<-perspectivesByDynamicId(dyn_id) %>% dplyr::select(perspective_id) %>% as.vector() %>% unlist() %>% as.numeric() %>% as.character()
+      dynamic_has_perspective<-!is.na(idsVect[1])
       
-      # retrieve character vector of perspective ids
-      idsVect<-perspectivesByDynamicId(dyn_id) %>% 
-        dplyr::select(perspective_id) %>% as.vector() %>% unlist() %>% as.numeric() %>% as.character()
-      # obtain all the the perspective beans and join them naming "selectedByPerspective.X" the column from bean X
-      listOfPerspectiveBeans=list()
-      for(i in idsVect){
-        #  cat(print(paste0("\n:",i)))
-        selColname=paste0("selectedByPerspective.",i)
-        listOfPerspectiveBeans[[i]]<-beanFromPerspectiveId(i) %>% as_tibble() %>% 
-          tidyr::replace_na(list(selected=0)) %>% 
-          dplyr::select(concept_id=id, concept_title=title, !!selColname:=selected) 
-        #tibble  glossary$beanFromPerspectiveId(i)
+      if(dynamic_has_perspective){
+        # dyn_id<-21;sdyn_id="21"
+        message(paste0("...lazy loading bean for dynamic ",sdyn_id))
+        
+        # retrieve character vector of perspective ids
+        #idsVect<-perspectivesByDynamicId(dyn_id) %>% 
+        #  dplyr::select(perspective_id) %>% as.vector() %>% unlist() %>% as.numeric() %>% as.character()
+        # obtain all the the perspective beans and join them naming "selectedByPerspective.X" the column from bean X
+        listOfPerspectiveBeans=list()
+        for(i in idsVect){
+          #  cat(print(paste0("\n:",i)))
+          selColname=paste0("selectedByPerspective.",i)
+          listOfPerspectiveBeans[[i]]<-beanFromPerspectiveId(i) %>% as_tibble() %>% 
+            tidyr::replace_na(list(selected=0)) %>% 
+            dplyr::select(concept_id=id, concept_title=title, !!selColname:=selected) 
+          #tibble  glossary$beanFromPerspectiveId(i)
+        }
+        # create one new column (corresponding to the whole "dynamic" selected column) counting how many times the 
+        # concept is selected (i.e. summing the "1"s in the "selectedByPerspective.X" columns)
+        
+        dynamicBeanWithPerspectives_tibble[[sdyn_id]]<<-
+          listOfPerspectiveBeans %>% 
+          purrr::reduce(dplyr::left_join, by=c("concept_id", "concept_title")) %>% 
+          dplyr::group_by(concept_id, concept_title) %>% 
+          tidyr::nest() %>% # ora sommo ogni elemento in "data":
+          dplyr::mutate(is_selected=purrr::map_dbl(data,sum)) %>% 
+          tidyr::unnest(cols = c(data)) %>% # TODO: use cols = c(data) (`cols` is now required when using unnest().)
+          dplyr::ungroup() %>% 
+          dplyr::mutate(concept_id=as.integer(concept_id)) %>% 
+          inner_join(dt_Concepts %>% dplyr::select( -concept_scalesAsText) %>% as_tibble() )
+        
+        
+        rm(listOfPerspectiveBeans)
       }
-      # create one new column (corresponding to the whole "dynamic" selected column) counting how many times the 
-      # concept is selected (i.e. summing the "1"s in the "selectedByPerspective.X" columns)
-      
-      dynamicBeanWithPerspectives_tibble[[sdyn_id]]<<-
-        listOfPerspectiveBeans %>% 
-        purrr::reduce(dplyr::left_join, by=c("concept_id", "concept_title")) %>% 
-        dplyr::group_by(concept_id, concept_title) %>% 
-        tidyr::nest() %>% # ora sommo ogni elemento in "data":
-        dplyr::mutate(is_selected=purrr::map_dbl(data,sum)) %>% 
-        tidyr::unnest() %>% 
-        dplyr::ungroup() %>% 
-        dplyr::mutate(concept_id=as.integer(concept_id)) %>% 
-        inner_join(dt_Concepts %>% dplyr::select(-concept_title, -concept_scalesAsText) %>% as_tibble() )
-      
-      
-      rm(listOfPerspectiveBeans)
+      else{
+        warning("dynamic has no perspective")
+          # dyn_id<-7;sdyn_id="7"
+          #concept_id (int), concept_title, is_selected, keyword_id (int), keyword_title
+          dynamicBeanWithPerspectives_tibble[[sdyn_id]]<<- beanFromDynamicId(dyn_id) %>% as_tibble() %>% 
+            dplyr::mutate(concept_id=as.integer(id), is_selected=0) %>% 
+            dplyr::select(concept_id, concept_title=title, is_selected) %>% 
+            inner_join(dt_Concepts %>% dplyr::select(-concept_scalesAsText) %>% as_tibble() ) %>% 
+            dplyr::select(concept_id, concept_title, is_selected, keyword_id, keyword_title) %>% as_tibble()
+      }
     }
     
     return(dynamicBeanWithPerspectives_tibble[[sdyn_id]])
@@ -455,7 +475,11 @@ if(FALSE){
   # e.g. (21 is the id of one dynamic with more than one perspective)
   # NOTE: connects to glossary software
   
-  glossary$beanWithPerspectivesByDynamicId_tibble(21) 
+    glossary$beanWithPerspectivesByDynamicId_tibble(21) 
+    glossary$beanWithPerspectivesByDynamicId_tibble(7) 
+  
+    #force reload with refresh=TRUE
+    glossary$beanWithPerspectivesByDynamicId_tibble(7,refresh = TRUE) 
   
   # glossary$dt_Dynamics() %>% 
   #   left_join(glossary$dt_SemanticPackages()) %>% 
