@@ -77,92 +77,18 @@ dashboardPagePlus(
                          htmlOutput(outputId = 'textRecord')
                        )
                      ),
-                     tabPanel(
-                       "Bean",
-                       tags$p(),
-                       tags$h5("TELLme semantics"),
-                       tags$p(),
-                       tags$div(
-                         id = 'tellme_panelContainer',
-                         tags$link(rel = "stylesheet", type = "text/css", href = "www/css/style.css"),
-                         tags$ul(
-                           id = "ul_tellme_semantics",
-                           class = "tellme_panelContainer",
-                           tags$li(
-                             id = "Physiography",
-                             class = "li_tellme_keyword",
-                             tags$a(
-                               href = "http://rdfdata.get-it.it/TELLmeGlossary/keyword_5",
-                               target = "blank",
-                               "Physiography"
-                             )
-                           ),
-                           tags$ul(
-                             class = "ul_tellme_concepts",
-                             tags$li(
-                               id = "Lithology_Soil_Degradation",
-                               class = "conceptToggle active",
-                               tags$a(
-                                 href = "http://rdfdata.get-it.it/TELLmeGlossary/concept_55",
-                                 target = "blank",
-                                 "Lithology_Soil_Degradation"
-                               )
-                             )
-                           ),
-                           tags$li(
-                             id = "Grey_Infrastructure",
-                             class = "li_tellme_keyword",
-                             tags$a(
-                               href = "http://rdfdata.get-it.it/TELLmeGlossary/keyword_4",
-                               target = "blank",
-                               "Grey_Infrastructure"
-                             )
-                           ),
-                           tags$ul(
-                             class = "ul_tellme_concepts",
-                             tags$li(
-                               id = "Docks",
-                               class = "conceptToggle active",
-                               tags$a(
-                                 href = "http://rdfdata.get-it.it/TELLmeGlossary/concept_3",
-                                 target = "blank",
-                                 "Docks"
-                               )
-                             ),
-                             tags$li(
-                               id = "Airport",
-                               class = "conceptToggle active",
-                               tags$a(
-                                 href = "http://rdfdata.get-it.it/TELLmeGlossary/concept_4",
-                                 target = "blank",
-                                 "Airport"
-                               )
-                             ),
-                             tags$li(
-                               id = "Railway",
-                               class = "conceptToggle active",
-                               tags$a(
-                                 href = "http://rdfdata.get-it.it/TELLmeGlossary/concept_24",
-                                 target = "blank",
-                                 "Railway"
-                               )
-                             ),
-                             tags$li(
-                               id = "Land_use",
-                               class = "conceptToggle",
-                               tags$a(
-                                 href = "http://rdfdata.get-it.it/TELLmeGlossary/concept_26",
-                                 target = "blank",
-                                 "Land_use"
-                               )
-                             )
-                           )
-                         )
+                     # conditionalPanel(
+                       # condition = "input.semPackage != 'Select dynamics'",
+                       tabPanel(
+                         "Bean",
+                         tags$p(),
+                         tags$h5("TELLme semantics"),
+                         tags$p(),
+                         htmlOutput(outputId = 'bean')
                        )
-                     )
-                   )
+                   # )
           )
         )
     )
-  )
+  ))
 )#end dashboardPagePlus

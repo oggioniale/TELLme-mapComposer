@@ -54,6 +54,58 @@ function(input, output, session) {
         }
       })
       
+      output$bean <- renderUI({
+        gg <- glossary$beanWithPerspectivesByDynamicId_tibble(input$dynamics) %>% 
+          dplyr::group_by(keyword_id, keyword_title) %>% 
+          tidyr::nest()
+        print(gg)
+        htmlUlKeywords <- htmltools::tags$ul(
+          id = "ul_tellme_semantics"
+        )
+        htmlUlConcept <- htmltools::tags$ul(
+          id = "ul_tellme_concepts"
+        )
+        for (i in 1:nrow(gg)) {
+          for (j in 1:nrow(gg[i,]$data[[1]])) {
+            htmlUlConcept <- htmltools::tagAppendChildren(
+              htmlUlConcept,
+              htmltools::tags$li(
+                id = gg[i,]$data[[1]][j,]$concept_id,
+                class =
+                  if (gg[i,]$data[[1]][j,]$is_selected == 0) {
+                    beanConceptLiClass = "conceptToggle"
+                  } else {
+                    beanConceptLiClass = "conceptToggle active"
+                  },
+                htmltools::tags$a(
+                  href = paste0("http://rdfdata.get-it.it/TELLmeGlossary/concept_", gg[i,]$data[[1]][j,]$concept_id),
+                  target = "blank",
+                  gg[i,]$data[[1]][j,]$concept_title
+                )
+              )
+            )
+            # htmlUlConcept
+          }
+          htmlUlKeywords <- htmltools::tagAppendChildren(
+            htmlUlKeywords,
+            htmltools::tags$li(
+              id = gg$keyword_id[i],
+              class = "li_tellme_keyword",
+              htmltools::tags$a(
+                href = paste0("http://rdfdata.get-it.it/TELLmeGlossary/keyword_", gg$keyword_id[i]),
+                target = "blank",
+                gg$keyword_title[i]
+              )
+            ),
+            htmlUlConcept
+          )
+          htmlUlConcept <- htmltools::tags$ul(
+            id = "ul_tellme_concepts"
+          )
+        }
+        htmlUlKeywords
+      })
+      
       # fitBound of city selected
       selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == input$cities)
       bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()

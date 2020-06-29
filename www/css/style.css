@@ -47,3 +47,87 @@ h1, h2, h3, h4 { font-weight: 400; }
 .leaflet-container {
   background-color: white !important;
 }
+
+/* TELLme semantic package CSS */
+#externalContainerSemantics{
+    display: block;
+    height: 99%;
+    padding:2px;
+}
+#tellme_panelContainer{
+    overflow: auto;
+    display: block;
+    /*padding: 15px;*/
+    border: 1px solid #8B008B;
+    border-radius: .9rem;
+    height: inherit;
+}
+
+#tellme_panelContainer .titolo{
+    padding:10px;
+}
+
+#ul_tellme_semantics{
+    font-size: 10px!important;
+    padding:10px;
+}
+
+/* links to LOD cloud */
+#ul_tellme_semantics a{
+    float:right;
+}
+
+#ul_tellme_semantics a{
+    color:rgb(51, 51, 51);
+}
+
+#ul_tellme_semantics .conceptToggle.active a{
+    color:#fff;
+}
+
+
+
+/* tellme keywords (title of each sublist of concepts) */
+.li_tellme_keyword{
+    cursor:pointer;
+    font-weight:bold;
+    text-transform:uppercase;
+    margin-bottom:.1rem;
+}
+
+.li_tellme_keyword.on::after{
+    content: " <<"
+}
+
+.li_tellme_keyword:hover{
+    color:#2e89a6;
+}
+
+.conceptToggle {
+    padding: 4px 0 4px 8px;
+    background-color:#fff;
+    color:#212529;
+    display:block;
+    cursor:pointer;
+}
+
+.conceptToggle.active {
+    background-color: #8B008B;
+    color: #fff;
+}
+
+.ul_tellme_concepts{
+    display:block;
+    /*width:200px;
+    float:left;*/
+}
+
+.ul_tellme_concepts > .active:first-of-type{
+border-top-left-radius:.25rem;
+border-top-right-radius:.25rem;
+}
+
+.ul_tellme_concepts > .active:last-of-type{
+border-bottom-left-radius:.25rem;
+border-bottom-right-radius:.25rem;
+}
