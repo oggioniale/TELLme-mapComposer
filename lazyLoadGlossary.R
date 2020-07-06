@@ -44,7 +44,7 @@ getGlossary <- function(read_online=TRUE) {
       else export=list(status_code=-1)
       
       if (export$status_code != 200) {
-        jsonunparsed <- readLines("./export_bar.json",-1)
+        jsonunparsed <- readLines("offline_files/export_glossary.json",-1)
         if(read_online) warningMsg<-paste0(
           "Unable to read latest glossary version: polimi software returned status code ",
           export$status_code, '. The last cached version will be used')
@@ -54,7 +54,7 @@ getGlossary <- function(read_online=TRUE) {
       else{
         #export$content
         jsonunparsed <- httr::content(export, "text")
-        writeLines(jsonunparsed,"./export_bar.json")
+        writeLines(jsonunparsed,"offline_files/export_glossary.json")
       }
       message('...done')
       return(jsonunparsed)
@@ -402,7 +402,7 @@ getGlossary <- function(read_online=TRUE) {
   self$refresh<-init
   # sets internal variable read_online, in order to be able to change it in the instance at runtime
   self$setOnline<-function(online=TRUE){
-    read_online<<-online
+    read_online<<-online #TODO: CHECK
   }
   #self$refresh_test<-refresh_test
   
@@ -411,13 +411,13 @@ getGlossary <- function(read_online=TRUE) {
 
 if(!FALSE){
   # create offline object instance
-  glossary <- getGlossary(read_online = FALSE)
+  glossary <- getGlossary(read_online = TRUE)
 }
 if(FALSE){
   
   ### some workout...
   # look at tables
-  glossary$dt_Protocols()
+  glossary$dt_Protocols() %>% as_tibble() %>% View()
   
   # refresh object by reading online
   #glossary$refresh()
@@ -512,10 +512,10 @@ if(FALSE){
   beanDyn11 %>% filter(selected==TRUE)
   
   glossary$dt_SemanticPackages() %>% select(metropolis) %>% unique() %>% as_tibble()
-  glossary$semanticPackagesByMetropolisName("guadalajara")
+  #glossary$semanticPackagesByMetropolisName("guadalajara")
   glossary$mm2mm_DynamicsSemanticPackagesIssues()
   glossary$dynamicsByMetropolisName("milan")
-  
+  beanDyn11<-glossary$beanWithPerspectivesByDynamicId_tibble(21)
   
 }
 if(FALSE){
