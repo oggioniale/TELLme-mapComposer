@@ -399,11 +399,19 @@ getGlossary <- function(read_online=TRUE) {
   self$beanWithPerspectivesByDynamicId_tibble<-beanWithPerspectivesByDynamicId_tibble
   
   
-  self$refresh<-init
-  # sets internal variable read_online, in order to be able to change it in the instance at runtime
-  self$setOnline<-function(online=TRUE){
-    read_online<<-online #TODO: CHECK
+  self$is_reading_online<-function(){return(read_online)}
+  self$set_read_online<-function(online){read_online<<-online}
+  self$refresh<-function(online=read_online){
+    if(online!=read_online)
+      read_online<<-online
+    init()
   }
+  
+  # self$refresh<-init
+  # # sets internal variable read_online, in order to be able to change it in the instance at runtime
+  # self$setOnline<-function(online=TRUE){
+  #   read_online<<-online #TODO: CHECK
+  # }
   #self$refresh_test<-refresh_test
   
   return(self)

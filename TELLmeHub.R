@@ -724,6 +724,7 @@ getTELLmeHub <- function(read_online=TRUE,
   
   self$getFeatureTypeGeometry<-getFeatureTypeGeometry
   
+  
   # ## TODO (?): methods that write information into the TELLme Hub
   # # associate a hkeyword to the specified layer (then reload the layers)
   # setLayerKeyword<-function(l_id, hkeyw_id){
@@ -746,7 +747,14 @@ getTELLmeHub <- function(read_online=TRUE,
     self$utils<-utils
   }
   
-  self$refresh<-init
+  self$is_reading_online<-function(){return(read_online)}
+  self$set_read_online<-function(online){read_online<<-online}
+  self$refresh<-function(online=read_online){
+    if(online!=read_online)
+      read_online<<-online
+    init()
+  }
+  
   return(self)
 }
 # set to TRUE in order to load an instance of hub while sourcing
