@@ -765,7 +765,7 @@ getTELLmeHub <- function(read_online=TRUE,
   # }
   if(exportUtilsFunctions) {
     #utils<-list()
-    utils$getApiObjectsJson<getApiObjectsJson
+    utils$getApiObjectsJson<-getApiObjectsJson
     #.... add here other utils to be exported on demand
     self$utils<-utils
   }
