@@ -13,6 +13,7 @@ getTELLmeHub <- function(read_online=TRUE,
   
   self=list()
   utils=list() #if export utils, it will be appended to self
+  info=list() # stores info about exported slots (which are not tables)
   
   
   # jq queries
@@ -283,7 +284,9 @@ getTELLmeHub <- function(read_online=TRUE,
       )
       return(res)
     }
-
+    
+    info[["getGeometryTypesForLayerSet"]]<-"@param x: lazydt or tibble with variables 'layer_id', 'layer_storeType', 'layer_ows_url', 'layer_typename'\n
+    @returns: tibble containing the same rows plus the field layer_geomType retrieved from ows service (or raster)"
     getGeometryTypesForLayerSet<-function(x){
       x %>% as_tibble() %>% 
         dplyr::rowwise(layer_id) %>% 
@@ -476,7 +479,7 @@ getTELLmeHub <- function(read_online=TRUE,
       
       
       
-      message("dt_Layers:")
+      message("dt_layers:")
       message(dt_layers %>% printHeader())
       
       # sublay<-dt_layers2 %>% filter(layer_id<100)
@@ -691,6 +694,10 @@ getTELLmeHub <- function(read_online=TRUE,
     utils$select_layersBy.tibbleOf.concept_id<-select_layersBy.tibbleOf.concept_id
   
   # NOTE: it does output only concepts with layers. Missing layers are not output.
+  info[["layersInBean"]]<-"Function that given a Bean and a (tellme)scale [e.g. \"XL\" or \"L\"] \n
+  Bean: a tibble with variable \"concept_id\" containing values like \"concept_12\" \n
+  returns a tibble with the available layers for the indicated tellme concepts.\n
+  NOTE: concepts with no associate layer will not be returned (to have all concepts with or witOUT layers please use the function beanWithLayers"
   self$layersInBean<-function(bean, scale){
     message("to retrieve the complete bean even with concepts without layers, use beanWithLayers function")
     #bean<-t
@@ -700,17 +707,16 @@ getTELLmeHub <- function(read_online=TRUE,
       dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate)
   }
   
+  info[["beanWithlayers"]]<-"INPUT: a Bean and a (tellme)scale [e.g. \"XL\" or \"L\"] \n
+  \nBean: a tibble with variable \"concept_id\" containing values like \"concept_12\" \n
+  RETURNS: a tibble with the available layers for the indicated tellme concepts.\n
+  NOTE: concepts with no associate layer WILL BE returned (to retrieve only the concepts WITH layers please use the function layersInBean"
   self$beanWithlayers <- function(bean, scale){
     select_layersBy.tibbleOf.concept_id(bean,scale) %>% 
       dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate)
   }
   
   self$getGeometryTypesForLayerSet<-getGeometryTypesForLayerSet
-  
-  # self$select_layersWithConcepts<-select_layersWithConcepts
-  # self$select_layersWithoutConcepts<-select_layersWithoutConcepts
-  self$dt_Layers<-dt_layers
-  
   
   # # method to explore layers without tellme related concept hkeywords 
   # self$getLayersWithoutAssociatedTELLmeConcept<-function(){
@@ -724,6 +730,23 @@ getTELLmeHub <- function(read_online=TRUE,
   
   self$getFeatureTypeGeometry<-getFeatureTypeGeometry
   
+  self$summary<-function(){
+    table_with_counts_message<-function(tablename){
+      #cat(
+        sprintf("Table %s \t type:%s, \t with \t%d records", tablename, class(self[[tablename]]())[1], self[[tablename]]() %>% count() %>% pull())
+      #)
+    }
+    cat("tellme hub object, containing the following tables:\n\n")
+    
+    for(t in names(self)){
+      if(t %>% startsWith("dt_") || t %>% startsWith("m2m_"))
+        cat("\n",table_with_counts_message(t))
+      else {
+        cat(paste("\n",t, "\tinfo:", info[[t]]))
+      }
+    }
+    
+  }
   
   # ## TODO (?): methods that write information into the TELLme Hub
   # # associate a hkeyword to the specified layer (then reload the layers)
