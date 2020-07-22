@@ -55,15 +55,22 @@ function(input, output, session) {
       })
       
       output$bean <- renderUI({
+        #add progress here
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Loading semantic package from TELLme Glossary software...", value = 0)
+        
         gg <- glossary$beanWithPerspectivesByDynamicId_tibble(input$dynamics) %>% 
           dplyr::group_by(keyword_id, keyword_title) %>% 
           tidyr::nest()
         print(gg)
+        htmlDivTellmePanelContainer<-htmltools::tags$div(id="tellme_panelContainer")
         htmlUlKeywords <- htmltools::tags$ul(
           id = "ul_tellme_semantics"
         )
         htmlUlConcept <- htmltools::tags$ul(
-          id = "ul_tellme_concepts"
+          class = "ul_tellme_concepts"
         )
         for (i in 1:nrow(gg)) {
           for (j in 1:nrow(gg[i,]$data[[1]])) {
@@ -100,10 +107,13 @@ function(input, output, session) {
             htmlUlConcept
           )
           htmlUlConcept <- htmltools::tags$ul(
-            id = "ul_tellme_concepts"
+            class = "ul_tellme_concepts"
           )
         }
-        htmlUlKeywords
+        htmlDivTellmePanelContainer<-htmltools::tagAppendChild(
+          htmlDivTellmePanelContainer,
+          htmlUlKeywords
+        )
       })
       
       # fitBound of city selected

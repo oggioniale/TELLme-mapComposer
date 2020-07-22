@@ -61,6 +61,8 @@ h1, h2, h3, h4 { font-weight: 400; }
     border: 1px solid #8B008B;
     border-radius: .9rem;
     height: inherit;
+    column-count:2;
+    max-height:500px;
 }
 
 #tellme_panelContainer .titolo{
@@ -70,11 +72,14 @@ h1, h2, h3, h4 { font-weight: 400; }
 #ul_tellme_semantics{
     font-size: 10px!important;
     padding:10px;
+    list-style:none;
+    /*max-height: 500px;
+    overflow:auto;*/
 }
 
 /* links to LOD cloud */
 #ul_tellme_semantics a{
-    float:right;
+    /*float:right;*/
 }
 
 #ul_tellme_semantics a{
@@ -120,6 +125,7 @@ h1, h2, h3, h4 { font-weight: 400; }
     display:block;
     /*width:200px;
     float:left;*/
+    padding-left:1rem;
 }
 
 .ul_tellme_concepts > .active:first-of-type{

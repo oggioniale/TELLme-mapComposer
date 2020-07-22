@@ -80,7 +80,7 @@ dashboardPagePlus(
                      # conditionalPanel(
                        # condition = "input.semPackage != 'Select dynamics'",
                        tabPanel(
-                         "Bean",
+                         "Semantic package",
                          tags$p(),
                          tags$h5("TELLme semantics"),
                          tags$p(),
