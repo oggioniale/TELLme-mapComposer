@@ -19,7 +19,7 @@ require(jqr);require(httr);require(jsonlite)
 require(openssl);require(rvest);require(stringr)
 require(dplyr);require(dtplyr);require(purrr);require(tidyr)
 
-getGlossary <- function(read_online=TRUE) {
+getTELLmeGlossary <- function(read_online=TRUE) {
   # imports:
   require(jqr);require(httr);require(jsonlite)
   require(openssl);require(rvest);require(stringr)
@@ -48,7 +48,7 @@ getGlossary <- function(read_online=TRUE) {
         if(read_online) warningMsg<-paste0(
           "Unable to read latest glossary version: polimi software returned status code ",
           export$status_code, '. The last cached version will be used')
-        else warningMsg<-"You called getGlossary(online=FALSE): retrieving glossary offline from the last cached version"
+        else warningMsg<-"You called getTELLmeGlossary(online=FALSE): retrieving glossary offline from the last cached version"
         warning(warningMsg)
       }
       else{
@@ -419,7 +419,7 @@ getGlossary <- function(read_online=TRUE) {
 
 if(!FALSE){
   # create offline object instance
-  glossary <- getGlossary(read_online = TRUE)
+  glossary <- getTELLmeGlossary(read_online = F)
 }
 if(FALSE){
   
@@ -523,7 +523,7 @@ if(FALSE){
   #glossary$semanticPackagesByMetropolisName("guadalajara")
   glossary$mm2mm_DynamicsSemanticPackagesIssues()
   glossary$dynamicsByMetropolisName("milan")
-  beanDyn11<-glossary$beanWithPerspectivesByDynamicId_tibble(21)
+  beanDyn21<-glossary$beanWithPerspectivesByDynamicId_tibble(21)
   
 }
 if(FALSE){
