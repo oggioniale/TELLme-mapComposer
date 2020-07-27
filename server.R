@@ -66,6 +66,11 @@ function(input, output, session) {
       RV$beanLayers <- ""
     }
     else {
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Loading data...", value = 0)
+      
       shinyjs::disable("cities")
       shinyjs::disable("dynamics")
       record <- glossary$mm2mm_DynamicsSemanticPackagesIssues() %>%
