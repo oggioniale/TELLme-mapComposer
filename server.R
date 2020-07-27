@@ -66,6 +66,8 @@ function(input, output, session) {
       RV$beanLayers <- ""
     }
     else {
+      shinyjs::disable("cities")
+      shinyjs::disable("dynamics")
       record <- glossary$mm2mm_DynamicsSemanticPackagesIssues() %>%
         dplyr::filter(dynamic_id == !!RV$selectedDynamicID) %>% 
         as_tibble()
@@ -79,6 +81,8 @@ function(input, output, session) {
         RV$bean,
         scale = RV$scale
       )
+      shinyjs::enable("cities")
+      shinyjs::enable("dynamics")
     }
   })
   
