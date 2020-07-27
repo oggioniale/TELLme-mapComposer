@@ -704,7 +704,11 @@ getTELLmeHub <- function(read_online=TRUE,
     #scale="L"
     select_layersBy.tibbleOf.concept_id(bean,scale) %>% 
       dplyr::filter(!is.na(layer_id)) %>% 
-      dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate)
+      dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate) %>% 
+      getGeometryTypesForLayerSet()
+    
+    #hub$layersInBean(glossary$beanWithPerspectivesByDynamicId_tibble(21),scale="M") 
+    #   %>% hub$getGeometryTypesForLayerSet()
   }
   
   info[["beanWithlayers"]]<-"INPUT: a Bean and a (tellme)scale [e.g. \"XL\" or \"L\"] \n
