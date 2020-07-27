@@ -384,8 +384,8 @@ getTELLmeGlossary <- function(read_online=TRUE) {
     
     listaFinale<-
       nested_with_namedIntegerColumn %>% pull(dd) %>% set_names(nested_with_namedIntegerColumn %>% pull(packageTitle) )
-    
-    return(listaFinale)
+    append(list("<select one>"=""),listaFinale)
+    #return(listaFinale)
   }
   
   # do not export the method by perspective by package: it is confusing. We use it only internally
