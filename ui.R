@@ -74,7 +74,8 @@ dashboardPagePlus(
                        ),
                        conditionalPanel(
                          condition = "input.semPackage != 'Select dynamics'",
-                         htmlOutput(outputId = 'textRecord')
+                         htmlOutput(outputId = 'textRecord'),
+                         htmlOutput(outputId = 'warning')
                        )
                      ),
                      # conditionalPanel(

@@ -48,6 +48,14 @@ h1, h2, h3, h4 { font-weight: 400; }
   background-color: white !important;
 }
 
+/* Position and style of progress bar */
+.shiny-notification{
+  position: fixed;
+  top: 33%;
+  left: 33%;
+  right: 33%;
+}
+
 /* TELLme semantic package CSS */
 #externalContainerSemantics{
     display: block;
