@@ -205,7 +205,6 @@ function(input, output, session) {
   observeEvent(RV$selectedMetropolis, {
     if (RV$selectedMetropolis != '') {
       # fitBound of city selected
-      RV$beanLayers
       selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == !!RV$selectedMetropolis)
       bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
       leaflet::leafletProxy("map", session) %>% 
@@ -229,7 +228,7 @@ function(input, output, session) {
         leaflet::addTiles() %>%
         leaflet::setView(0, 30, zoom = 3) %>%
         leaflet::addLayersControl(position = 'bottomright',
-                                  overlayGroups = c('Metropolis')#,
+                                  overlayGroups = c('Metropolis', 'Dynamic')#,
                                   # options = leaflet::layersControlOptions(collapsed = FALSE)
         ) %>%
         leaflet::addMarkers(
@@ -241,6 +240,37 @@ function(input, output, session) {
           icon = tellmeIcons,
           group = 'Metropolis'
         )
+    }
+  })
+  
+  # add layers in bean
+  observeEvent(RV$beanLayers, {
+    if (RV$beanLayers != '') {
+      # bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
+      # leaflet::leafletProxy("map", session) %>% 
+      #   leaflet::addWMSTiles(
+      #     "http://140.164.11.125:8080/geoserver/tellme/wms",
+      #     layers = ,
+      #     options = WMSTileOptions(format = "image/png", transparent = T)
+      #   ) #%>%
+      #   # leaflet::fitBounds(bbox[1], bbox[2], bbox[3], bbox[4])
+      
+      ows_urlsBean <- RV$beanLayers %>% dplyr::select(layer_ows_url) %>% pull()
+      typenamesBean <- RV$beanLayers %>% dplyr::select(layer_typename) %>% pull()
+      
+      for (i in 1:length(typenamesBean)) {
+        map <- leaflet::leafletProxy("map", session)
+        map %>% leaflet::addWMSTiles(
+          ows_urlsBean[i],
+          layers = typenamesBean[i],
+          options = WMSTileOptions(
+            # styles = ,
+            format = "image/png", 
+            transparent = T
+          ),
+          group = "Dynamic"
+        )
+      }
     }
   })
 }
