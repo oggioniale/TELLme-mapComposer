@@ -930,7 +930,7 @@ getTELLmeHub <- function(read_online=TRUE,
   return(self)
 }
 # set to TRUE in order to load an instance of hub while sourcing
-if(TRUE){
+if(FALSE){
   hub<-getTELLmeHub(
     read_online = T,
     TELLMEHUB_URL=TELLMEHUB_URL, 
