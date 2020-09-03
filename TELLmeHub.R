@@ -8,7 +8,7 @@ source("accounts_private.R")
 getTELLmeHub <- function(read_online=TRUE, 
                          TELLMEHUB_URL, TELLME_HUB_USER, TELLME_HUB_PASSWORD, 
                          exportUtilsFunctions=FALSE,
-                         writeJJtoDisk=FALSE) {
+                         writeJJtoDisk=FALSE, exportAdminFunctions=FALSE) {
   require(jqr); require(httr); require(dplyr); require(jsonlite); require(dtplyr); require(purrr); require(tidyr);require(rvest)
   
   self=list()
@@ -134,7 +134,7 @@ getTELLmeHub <- function(read_online=TRUE,
     
     # any other internal variables
     #getlayersForBeans=NULL # function to retrieve, given a set of tellme concepts, (a geographic area) and a tellme scale, the corresponding available layers within the hub.
-    
+    authsession <- NULL
   }# internal variables
   
   
@@ -242,6 +242,7 @@ getTELLmeHub <- function(read_online=TRUE,
     }
     
     internal.getScrapingAuthSession<-function(usr=TELLME_HUB_USER, pwd=TELLME_HUB_PASSWORD){
+      #if(grepl("account/login",res$url))
       message("- authenticating to tellmehub")
       require(rvest)
       login <- paste0(TELLMEHUB_URL,"account/login")
@@ -431,11 +432,13 @@ getTELLmeHub <- function(read_online=TRUE,
       ##ALTER TABLE LAYERS
       # add geometry type
       
+      authsession<<-internal.getScrapingAuthSession()
       ###  - step 1 (ows is missing, geometry is missing)
       # scrape service page to
       # retrieve available remote services names and urls
       message_inc("----- scrape tellme hub to retrieve remote services")
-      dt_services <<- {internal.getScrapingAuthSession() %>% 
+      dt_services <<- {#internal.getScrapingAuthSession() %>% 
+        authsession %>% 
         rvest::jump_to("/services") %>% 
         rvest::html_node(".table-striped") %>% 
         rvest::html_table() %>% 
@@ -774,6 +777,148 @@ getTELLmeHub <- function(read_online=TRUE,
     self$utils<-utils
   }
   
+  if(exportAdminFunctions){
+    admin<-list()
+    
+    admin.GET<-function(url){
+      res<-httr::GET(url = url,handle = authsession$handle)
+      if(grepl("account/login", res$url)){
+        authsession<<-internal.getScrapingAuthSession()
+        warning("authenticated session was expired. Retry.")
+      }
+      return(res)
+    }
+    
+    #sprintf("",)
+    admin$mapid_set_scale<-function(map_id,scale){
+      s=sprintf(paste0(TELLMEHUB_URL,"tellme/maps/%d/set_scale/%s"), map_id, scale)
+      res<-admin.GET(s)
+      # res$content
+      return(res)
+    }
+    admin$mapid_set_protocol<-function(map_id,protocol_id){
+      s=sprintf(paste0(TELLMEHUB_URL,"tellme/maps/%d/set_protocolid/%d"), map_id, protocol_id)
+      res<-admin.GET(s)
+      # if(!is.null(content(res)$success) && content(res)$success) {
+      #   dt_map %>% mutate(category_identifier=if_else())
+      # }
+      return(res)
+    }
+    admin$layername_set_conceptid<-function(layername,concept_id, add=FALSE){
+      s=sprintf(paste0(TELLMEHUB_URL,"tellme/layers/%s/set_conceptid/%d"), layername,concept_id)
+      if(add) s=paste0(s,"?add=TRUE")
+      res<-admin.GET(s)
+      # cr<-httr::content(res)
+      # if(!is.null(cr$success) && cr$success){
+      #   if(!add){
+      #     m2m_layer_keywords<<-m2m_layer_keywords %>% filter(layer_id!=!!cr$layer_id)
+      #   }
+      #   m2m_layer_keywords<<-m2m_layer_keywords %>% add_row(layer_id=!!cr$layer_id,hkeyword_id=!!cr$hkeyword_id)
+      # }
+      return(res)
+    }
+    admin$layerid_set_conceptid<-function(layer_id,concept_id, add=FALSE){
+      s=sprintf(paste0(TELLMEHUB_URL,"tellme/set_layerid_conceptid/%d/%d"), layer_id, concept_id)
+      if(add)s=paste0(s,"?add=TRUE")
+      res<-admin.GET(s)
+      # cr<-httr::content(res)
+      # if(!is.null(cr$success) && cr$success){
+      #   if(!add){
+      #     m2m_layer_keywords<<-m2m_layer_keywords %>% filter(layer_id!=!!cr$layer_id)
+      #   }
+      #   m2m_layer_keywords<<-m2m_layer_keywords %>% add_row(layer_id=!!cr$layer_id,hkeyword_id=!!cr$hkeyword_id)
+      # }
+      return(res)
+    }
+    
+    
+    if(F){
+    # admin.GET<-function(url, getit_superuser, getit_password){
+    #   
+    #   urlauth<-paste0(TELLMEHUB_URL,"account/login/")
+    #   res<-httr::GET(url=urlauth) # questo dovrebbe servire a settare i cookie necessari alla POST successiva
+    #   
+    #   # obtain csfrtoken
+    #   s<-res$headers$`set-cookie` # e.g. "csrftoken=saknwlpo8G64UKJDR7UGxNbue184D9if; expires=Mon, 08-Feb-2021 15:12:47 GMT; Max-Age=31449600; Path=/"
+    #   s_split<-strsplit(s,";")
+    #   s_kv<-grep("csrftoken",fixed=TRUE,s_split[[1]],value=TRUE)
+    #   csfrtoken<-sub("csrftoken=","",s_kv)
+    #   
+    #   reslogin<-httr::POST(url=urlauth,
+    #                        body=list(csrfmiddlewaretoken=csfrtoken,
+    #                                  username=getit_superuser,
+    #                                  password=getit_password)
+    #   )
+    #   
+    #   res<-httr::GET(url = url,
+    #                  query=query
+    #   )
+    #   return(res)
+    # }
+    }
+    # layertitle: field title of both get-it and geoserver. It will be keeped as passed (e.g.uppercase)
+    # on the contrary, the layer name is for example lowercased version of the Title
+    admin$getit_uploadLayer<-function(zipname_and_path, layertitle=NULL, the_abstract="", getit_user=TELLME_HUB_USER, getit_userpassword=TELLME_HUB_PASSWORD){
+        getit_url<-TELLMEHUB_URL
+        
+        zipname<-basename(zipname_and_path)
+        #layername<-layertitle
+        geoserver_layername=sub(".zip","",zipname,fixed = T)
+        if(is.null(layertitle)){
+          layertitle=geoserver_layername
+          #TODO: verificare nome layer in geoserver. Potrebbe 1. alterare alcuni caratteri; 2. non coincidere con layertitle passato al get-it
+          # in questo caso bisogna agire di conseguenza sulla parte di codice che assegna la keyword e che poi esegue updatelayers
+        }
+        
+        ### auth
+        {
+          urlauth<-paste0(getit_url,"account/login/")
+          res<-httr::GET(url=urlauth) 
+          
+          # obtain csfrtoken
+          s<-res$headers$`set-cookie` # e.g. "csrftoken=saknwlpo8G64UKJDR7UGxNbue184D9if; expires=Mon, 08-Feb-2021 15:12:47 GMT; Max-Age=31449600; Path=/"
+          s_split<-strsplit(s,";")
+          s_kv<-grep("csrftoken",fixed=TRUE,s_split[[1]],value=TRUE)
+          csfrtoken<-sub("csrftoken=","",s_kv)
+          
+          reslogin<-httr::POST(url=urlauth,
+                               body=list(csrfmiddlewaretoken=csfrtoken,
+                                         username=getit_user,
+                                         password=getit_userpassword)
+          )
+        }
+        
+        ccc<-cookies(reslogin)
+        loggedin_token<-ccc$value[ccc$name=="csrftoken"]
+        loggedin_session<-ccc$value[ccc$name=="sessionid"]
+        response<-httr::POST(paste0(getit_url,"layers/upload"),
+                             config = httr::add_headers(`X-CSRFToken`=loggedin_token, Accept="*/*", 
+                                                        Origin=getit_url, 
+                                                        Connection="keep-alive", 
+                                                        Referer=paste0(getit_url,"layers/upload")
+                             ),
+                             body=list(base_file=upload_file(zipname_and_path),
+                                       permissions='{"users":{"AnonymousUser":["view_resourcebase","download_resourcebase"]},"groups":{}}',
+                                       zip_file=upload_file(zipname_and_path),
+                                       charset="UTF-8",
+                                       abstract=the_abstract,
+                                       layer_title=layertitle)
+        )
+        # extract geoserver_layername from response if possible
+        getit_layerurl<-content(response)$url
+        getit_layername<-sub("/layers/","",getit_layerurl)
+        geoserver_layertitle<-layertitle # it is unchanged with respect to the layertitle passed through the POST request
+        geoserver_layername<-getit_layername
+        # TODO: check return values for names of the layers in geoserver and in get-it: are they correct? are they the same?
+        return(list(status=status_code(response),getit_layername=getit_layername, geoserver_layername=geoserver_layername, getit_layerurl=getit_layerurl, response=response))
+    }
+    # output<-hub$admin$getit_uploadLayer(...)
+    # then use output$getit_layername as the layer name for further operations like setting the concept_id
+    
+    
+    self$admin<-admin
+  }
+  
   self$is_reading_online<-function(){return(read_online)}
   self$set_read_online<-function(online){read_online<<-online}
   self$refresh<-function(online=read_online){
@@ -785,12 +930,54 @@ getTELLmeHub <- function(read_online=TRUE,
   return(self)
 }
 # set to TRUE in order to load an instance of hub while sourcing
-if(FALSE){
+if(TRUE){
   hub<-getTELLmeHub(
-    read_online = FALSE,
+    read_online = T,
     TELLMEHUB_URL=TELLMEHUB_URL, 
     TELLME_HUB_USER = TELLME_HUB_USER, 
     TELLME_HUB_PASSWORD = TELLME_HUB_PASSWORD, 
     exportUtilsFunctions = TRUE,
-    writeJJtoDisk = FALSE)
+    writeJJtoDisk = FALSE,
+    exportAdminFunctions = TRUE)
 }
+if(FALSE){ #EXAMPLE USAGE of $admin functions
+  # the_concept_id=77
+  # output_newLayer<-hub$admin$getit_uploadLayer(zipname_and_path = "prova.zip",layertitle = "prova")
+  # #status
+  # #getit_layername
+  # #geoserver_layername
+  # #getit_layerurl
+  # #response
+  # if(output_newLayer$status==200){
+  #   lname<-output_newLayer$getit_layername
+  #   hub$admin$layername_set_conceptid(lname, the_concept_id)
+  # }
+  
+  # res<-hub$admin$mapid_set_protocol(485,1)
+  # (res %>% content())$success
+  # 
+  # #http://tellmehub.get-it.it/tellme/layers/geonode:areas_geoestadisticas_municipales/set_conceptid/77
+  res<-hub$admin$layername_set_conceptid(layername = "geonode:areas_geoestadisticas_municipales", concept_id = 77,add=FALSE)
+  # res %>% content()
+  uploadedLayerOutput<-hub$admin$getit_uploadLayer(zipname_and_path = "./_trash/layerprova/PROVAPROVA/Archivio.zip",layertitle = "PROVAPROVA",the_abstract = "UPLOAD_TEST")
+  
+  if(uploadedLayerOutput$status==200)
+    print("success")
+  else
+    print("failure")
+    
+  
+  getit_updatelayers(getit_url = "http://tellmehub.get-it.it", getit_superuser = "admin", getit_password = "admin", workspacename = "geonode", datastorename = "geonode_data",layername = "provaprova", ownername = "admin")
+  
+  #hub$admin$getit_uploadLayer()
+  # TODO: when upload is done correctly reload the hub object
+  #         hub$refresh(online = TRUE)
+  #       ** or add lines in internal datatables **
+  # TODO: upload new style: 
+  #   http://tellmehub.get-it.it/layers/geonode:gua_ran_nucleosagrarios_1/style_upload (?)
+  # Follow the http workflow and implement it (rvest?)
+  # TODO: manage styles: add existing style to layer, set layer default style, 
+  #   /gs/geonode:gua_ran_nucleosagrarios_1/style/manage (POST FORM)
+  # Same as previous, or consider using geoserver directly (cf. utils.R) after evaluating behaviour of geonode sw layer.
+}
+
