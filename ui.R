@@ -72,24 +72,40 @@ dashboardPagePlus(
                                       multiple = FALSE,
                                       selected = NULL
                        ),
+                       fluidRow(
+                         valueBoxOutput("vbox1", width = 4),
+                         valueBoxOutput("vbox2", width = 8)
+                       ),
+                       fluidRow(
+                         valueBoxOutput("vbox3", width = 3),
+                         valueBoxOutput("vbox4", width = 9)
+                       ),
                        conditionalPanel(
-                         condition = "input.semPackage != 'Select dynamics'",
-                         htmlOutput(outputId = 'textRecord'),
-                         htmlOutput(outputId = 'warning')
+                         condition = "!RV$metropolisHasDynamics",
+                         infoBoxOutput("warning", width = 12)
                        )
                      ),
-                     # conditionalPanel(
-                       # condition = "input.semPackage != 'Select dynamics'",
-                       tabPanel(
-                         "Semantic package",
-                         tags$p(),
-                         tags$h5("TELLme semantics"),
-                         tags$p(),
-                         htmlOutput(outputId = 'bean')
-                       )
-                   # )
+                     tabPanel(
+                       "Semantic package",
+                       tags$p(),
+                       tags$h5("TELLme semantics"),
+                       tags$p(),
+                       selectizeInput(
+                         'perspectives',
+                         label = 'Select one or more perspective of this dynamic: ',
+                         choices = NULL,
+                         multiple = TRUE,
+                         selected = NULL,
+                         options = list(
+                           plugins = list("remove_button")
+                         )
+                       ),
+                       # uiOutput(outputId = 'selectionPrespectives'),
+                       tags$p(),
+                       htmlOutput(outputId = 'bean')
+                     )
+                   )
           )
-        )
     )
   ))
 )#end dashboardPagePlus

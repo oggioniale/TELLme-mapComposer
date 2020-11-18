@@ -1,4 +1,30 @@
 function(input, output, session) {
+  ## Leaflet Plugin
+  layerTreePlugin <- htmltools::htmlDependency("Leaflet.LayerTreePlugin", "1.0.0",
+                               src = c(href = "https://github.com/bambrikii/leaflet-layer-tree-plugin/find/master/src/"),
+                               script = "leaflet-layer-tree-control.js"
+  )
+  
+  registerPlugin <- function(map, plugin) {
+    map$dependencies <- c(map$dependencies, list(plugin))
+    map
+  }
+  ##
+  
+  # output$selectionPrespectives <- renderUI({
+  #   pippo <- glossary$listForPerspectivesSelectize(glossary$perspectivesByDynamicId(RV$selectedDynamicID))
+  #   selectizeInput(
+  #     inputId = 'perspectives',
+  #     label = "Select one or more perspective of this dynamic:",
+  #     choices = glossary$listForPerspectivesSelectize(RV$perspectives),
+  #     multiple = TRUE,
+  #     selected = NULL,
+  #     options = list(
+  #       plugins = list("remove_button")
+  #     )
+  #   )
+  # })
+  
   RV <- reactiveValues(
     selectedMetropolis = '',
     selectedPackageID = '',
@@ -81,44 +107,99 @@ function(input, output, session) {
       RV$scale <- record %>% dplyr::select(package_scale) %>% pull()
       RV$dynamicName <- record %>% dplyr::select(dynamic_title) %>% pull()
       RV$dynamicConceptCount <- record %>% dplyr::select(dynamic_conceptCount) %>% pull()
-      RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
+      RV$perspectives <- glossary$perspectivesByDynamicId(RV$selectedDynamicID)
+      
+      updateSelectizeInput(
+        session,
+        'perspectives',
+        choices = tail(glossary$listForPerspectivesSelectize(RV$perspectives), n = 1),
+        server = TRUE
+      )
+      
+      desideredPerspectives <- c('concept_id', 
+                                 'concept_title', 
+                                 paste0('selectedByPerspective.', '28'),#input$perspectives), 
+                                 'is_selected',
+                                 'keyword_id',
+                                 'keyword_title')
+      RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% 
+        dplyr::select_(.dots = desideredPerspectives)
       RV$beanLayers <- hub$layersInBean(
         RV$bean,
         scale = RV$scale
       )
+        
       shinyjs::enable("cities")
       shinyjs::enable("dynamics")
     }
   })
   
-  output$textRecord <- renderUI({
-    HTML(paste0(
-      "<hr><h4>Metropolis:</h4><h4>",
-      RV$selectedMetropolis,
-      "</h4><br><h4>Issue:</h4><h4>",
-      RV$issueName,
-      "</h4><br><h4>Scale:</h4><h4>",
-      RV$scale,
-      "</h4><br><h4>Dynamic:</h4><h4>",
-      RV$dynamicName,
-      "</h4>"
-    ))
+  output$vbox1 <- renderValueBox({
+    valueBox(
+      value = tags$h2(RV$selectedMetropolis),
+      subtitle = "Metropolis",
+      color = "aqua"
+    )
   })
   
-  output$warning <- renderUI({
+  output$vbox2 <- renderValueBox({
+    valueBox(
+      value = tags$h2(RV$issueName),
+      subtitle = "Issue",
+      color = "aqua"
+    )
+  })
+  
+  output$vbox3 <- renderValueBox({
+    valueBox(
+      value = tags$h2(RV$scale),
+      subtitle = "Scale",
+      color = "aqua"
+    )
+  })
+  
+  output$vbox4 <- renderValueBox({
+    valueBox(
+      value = tags$h2(RV$dynamicName, style = "white-space: pre-wrap;"),
+      subtitle = "Dynamic",
+      color = "aqua"
+    )
+  })
+  
+  output$warning <- renderInfoBox({
     messageTellMe = ''
     # if (RV$dynamicConceptCount == '0') {
     #   messageTellMe = "No semantic package"
     # }
     if (!RV$metropolisHasDynamics) {
       messageTellMe = "No dynamics available for the selected metropolis"
+    } 
+    else {
+      messageTellMe = ""
     }
-    HTML(paste0(
-      "<hr><h4>",
-      messageTellMe,
-      "</h4>"
-    ))
+    infoBox(
+      "Info message", 
+      messageTellMe, 
+      icon = icon("bell"),
+      color = "red", 
+      fill = TRUE
+    )
   })
+  
+  # output$warning <- renderUI({
+  #   messageTellMe = ''
+  #   # if (RV$dynamicConceptCount == '0') {
+  #   #   messageTellMe = "No semantic package"
+  #   # }
+  #   if (!RV$metropolisHasDynamics) {
+  #     messageTellMe = "No dynamics available for the selected metropolis"
+  #   }
+  #   HTML(paste0(
+  #     "<hr><h4>",
+  #     messageTellMe,
+  #     "</h4>"
+  #   ))
+  # })
   
   output$bean <- renderUI({
     req(RV$bean)
@@ -228,7 +309,7 @@ function(input, output, session) {
         leaflet::addTiles() %>%
         leaflet::setView(0, 30, zoom = 3) %>%
         leaflet::addLayersControl(position = 'bottomright',
-                                  overlayGroups = c('Metropolis', 'Dynamic')#,
+                                  overlayGroups = c('Metropolis', 'Dynamic/Perspectives')#,
                                   # options = leaflet::layersControlOptions(collapsed = FALSE)
         ) %>%
         leaflet::addMarkers(
@@ -268,8 +349,12 @@ function(input, output, session) {
             format = "image/png", 
             transparent = T
           ),
-          group = "Dynamic"
-        )
+          group = "Dynamic/Perspectives"
+        ) # %>% 
+        # Layer Tree Plugin demo http://rawgit.com/bambrikii/leaflet-layer-tree-plugin/master/examples/basic-example.htm
+        # some info about Leaflet integration in R
+        # registerPlugin(layerTreePlugin) %>%
+        #   onRender(...)
       }
     }
   })
