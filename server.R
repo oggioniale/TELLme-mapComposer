@@ -150,6 +150,8 @@ function(input, output, session) {
     }
   })
   
+  # when perspectives are chosen, the bean model is updated with the selected concepts, 
+  # and the set of the available layers for the current selection is computed.
   observeEvent(input$perspectives,{
     #activePerspectives<-input$perspectives
     # colsWithDesideredPerspectives <- c('concept_id', 
@@ -160,25 +162,27 @@ function(input, output, session) {
     #                            'keyword_title')
     # 
     # update the bean: put selected perspectives in OR and update selected layers accordingly
-    RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
+    #RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
     
     if(length(input$perspectives)>0){
       activePerspectivesColumns<-paste0('selectedByPerspective.',input$perspectives)
       warning("selected perspectives:", activePerspectivesColumns)
       # #dplyr::select_(.dots = colsWithDesideredPerspectives) 
-      RV$bean <- RV$bean %>% 
+      RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% 
         mutate(sum=rowSums(.[activePerspectivesColumns]))  %>% 
         mutate(is_selected=as.numeric(sum>0)) %>% dplyr::select(-sum)
     }
     else{
-      RV$bean <- RV$bean %>% mutate(is_selected=0)
+      RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% mutate(is_selected=0)
     }
     
     RV$beanLayers <- hub$layersInBean(
-      RV$bean,
+      RV$bean %>% dplyr::filter(is_selected>0),
       scale = RV$scale
     )
-  })
+  },
+  ignoreNULL  = FALSE,
+  ignoreInit = TRUE)
   
   {
   output$vbox1 <- renderValueBox({
@@ -249,6 +253,7 @@ function(input, output, session) {
   # })
   }
 
+  # when the bean model is updated, the bean panel is updated too.
   output$bean <- renderUI({
     req(RV$bean)
     #add progress here
@@ -330,7 +335,7 @@ function(input, output, session) {
   })
   
   ## Interactive Map ##########################################
-  # Create the map
+  # Create and center the map on the highlighted selected metropolis polygon.
   observeEvent(RV$selectedMetropolis, {
     if (RV$selectedMetropolis != '') {
       # fitBound of city selected
@@ -372,9 +377,10 @@ function(input, output, session) {
     }
   })
   
-  # add layers in bean
+  # the set of the available layers for the current selection in the bean is shown
   observeEvent(RV$beanLayers, {
-    if (RV$beanLayers != '') {
+    #message(RV$beanLayers)
+    if (typeof(RV$beanLayers)=="list" && dim(RV$beanLayers)[1] > 0 )  {
       # bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
       # leaflet::leafletProxy("map", session) %>% 
       #   leaflet::addWMSTiles(
@@ -384,8 +390,9 @@ function(input, output, session) {
       #   ) #%>%
       #   # leaflet::fitBounds(bbox[1], bbox[2], bbox[3], bbox[4])
       
-      ows_urlsBean <- RV$beanLayers %>% dplyr::select(layer_ows_url) %>% pull()
-      typenamesBean <- RV$beanLayers %>% dplyr::select(layer_typename) %>% pull()
+      #RV$beanLayers %>% dplyr::filter(is_selected>0)
+      ows_urlsBean <- RV$beanLayers %>% dplyr::filter(is_selected>0) %>% dplyr::select(layer_ows_url) %>% pull()
+      typenamesBean <- RV$beanLayers %>% dplyr::filter(is_selected>0) %>% dplyr::select(layer_typename) %>% pull()
       
       for (i in 1:length(typenamesBean)) {
         map <- leaflet::leafletProxy("map", session)
@@ -404,6 +411,10 @@ function(input, output, session) {
         # registerPlugin(layerTreePlugin) %>%
         #   onRender(...)
       }
+    }
+    else{
+      map <- leaflet::leafletProxy("map", session)
+      map %>% leaflet::clearGroup("Dynamic/Perspectives")
     }
   })
 }

@@ -289,15 +289,28 @@ getTELLmeHub <- function(read_online=TRUE,
     info[["getGeometryTypesForLayerSet"]]<-"@param x: lazydt or tibble with variables 'layer_id', 'layer_storeType', 'layer_ows_url', 'layer_typename'\n
     @returns: tibble containing the same rows plus the field layer_geomType retrieved from ows service (or raster)"
     getGeometryTypesForLayerSet<-function(x){
-      x %>% as_tibble() %>% 
-        dplyr::rowwise(layer_id) %>% 
-        dplyr::mutate(
-          layer_geomType = if_else(layer_storeType=="coverageStore", 
-                                   "raster", 
-                                   if_else(layer_ows_url=="", 
-                                           "", 
-                                           getFeatureTypeGeometry(featureTypeName=layer_typename,wfsUrl=layer_ows_url) 
-                                   )))
+      #warning("---  TELLmeHub (getGeometryTypesForLayerSet). nrow of bean is:", x %>% count() %>% pull(), " or ", dim(x)[1])
+      #browser()
+      if(x!="" && dim(x)[1] > 0){
+        #browser()
+        y<-x %>% as_tibble() %>% 
+          dplyr::rowwise(layer_id) %>% 
+          dplyr::mutate(
+            layer_geomType = if_else(layer_storeType=="coverageStore", 
+                                     "raster", 
+                                     if_else(layer_ows_url=="", 
+                                             "", 
+                                             getFeatureTypeGeometry(featureTypeName=layer_typename,wfsUrl=layer_ows_url) 
+                                     )))
+      }
+      else{
+        #browser()
+        #warning("--- setting layer_geomType dummy column")
+        y<-x %>% mutate(layer_geomType=0)
+      }
+      #browser()
+      warning("---  TELLmeHub (getGeometryTypesForLayerSet). EXITING")
+      y
     }
     
     printHeader<-function(x, sep=", "){x %>% as_tibble()%>% colnames() %>% paste(collapse=sep)}
@@ -705,10 +718,15 @@ getTELLmeHub <- function(read_online=TRUE,
     message("to retrieve the complete bean even with concepts without layers, use beanWithLayers function")
     #bean<-t
     #scale="L"
-    select_layersBy.tibbleOf.concept_id(bean,scale) %>% 
+    x1<-select_layersBy.tibbleOf.concept_id(bean,scale) %>% 
       dplyr::filter(!is.na(layer_id)) %>% 
-      dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate) %>% 
-      getGeometryTypesForLayerSet()
+      dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate)
+    #browser()
+    if(dim(x1)[1]>0){
+      x1<-x1 %>% getGeometryTypesForLayerSet()
+    }
+    x1
+    
     
     #hub$layersInBean(glossary$beanWithPerspectivesByDynamicId_tibble(21),scale="M") 
     #   %>% hub$getGeometryTypesForLayerSet()
