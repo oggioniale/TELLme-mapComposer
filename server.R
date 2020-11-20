@@ -112,10 +112,13 @@ function(input, output, session) {
       updateSelectizeInput(
         session,
         'perspectives',
-        choices = glossary$listForPerspectivesSelectize(RV$perspectives),
-        selected = RV$perspectives %>% pull(perspective_id),
+        choices = glossary$listForPerspectivesSelectize(RV$perspectives)[[1]],
+        #selected = RV$perspectives %>% pull(perspective_id),
         server = TRUE
       )
+      
+      RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% 
+        mutate(is_selected=0)
       
       # #activePerspectives<-input$perspectives
       # # colsWithDesideredPerspectives <- c('concept_id', 
@@ -166,6 +169,9 @@ function(input, output, session) {
       RV$bean <- RV$bean %>% 
         mutate(sum=rowSums(.[activePerspectivesColumns]))  %>% 
         mutate(is_selected=as.numeric(sum>0)) %>% dplyr::select(-sum)
+    }
+    else{
+      RV$bean <- RV$bean %>% mutate(is_selected=0)
     }
     
     RV$beanLayers <- hub$layersInBean(
