@@ -9,11 +9,11 @@ metropolisPolygons  <- sf::st_read("cityGeojson/metropolis2.gpkg")
 #metropolisPolygons %>% dplyr::filter(tellmeCityLabel == "Milan")
 
 source("lazyLoadGlossary.R")
-glossary<-getTELLmeGlossary(read_online=F) #set this to true in production
+glossary<-getTELLmeGlossary(read_online=TRUE) #set this to true in production
 
 source("TELLmeHub.R")
 hub<-getTELLmeHub(
-  read_online = FALSE, #set this to true in production
+  read_online = TRUE, #set this to true in production
   TELLMEHUB_URL=TELLMEHUB_URL, 
   TELLME_HUB_USER = TELLME_HUB_USER, 
   TELLME_HUB_PASSWORD = TELLME_HUB_PASSWORD, 
