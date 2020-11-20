@@ -388,6 +388,23 @@ getTELLmeGlossary <- function(read_online=TRUE) {
     #return(listaFinale)
   }
   
+  self$listForPerspectivesSelectize<-function(input){
+    #input <- perspectivesByDynamicId(dynamicId)
+    # per farlo in un solo passaggio posso creare una nuova colonna con questa funzione di appoggio
+    my_fx<-function(tb){tb$perspective_id %>% set_names(tb$perspective_title)}
+    
+    nested<-input %>% 
+      as_tibble() %>% 
+      dplyr::select(perspective_title, perspective_id) %>% nest()
+    
+    nested_with_namedIntegerColumn<-nested %>% mutate(dd=map(data,my_fx)) 
+    
+    listaFinale<-
+      nested_with_namedIntegerColumn %>% pull(dd) %>% set_names(nested_with_namedIntegerColumn %>% pull(dd) )
+    #append(list("<select one>"=""),listaFinale)
+    return(listaFinale)
+  }
+  
   # do not export the method by perspective by package: it is confusing. We use it only internally
   #self$perspectivesByPackageId<-perspectivesByPackageId # DEPRECATED export
   self$perspectivesByDynamicId<-perspectivesByDynamicId
@@ -417,9 +434,9 @@ getTELLmeGlossary <- function(read_online=TRUE) {
   return(self)
 }
 
-if(!FALSE){
+if(FALSE){
   # create offline object instance
-  glossary <- getTELLmeGlossary(read_online = F)
+  glossary <- getTELLmeGlossary(read_online = T)
 }
 if(FALSE){
   
