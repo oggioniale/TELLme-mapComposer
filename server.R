@@ -112,28 +112,75 @@ function(input, output, session) {
       updateSelectizeInput(
         session,
         'perspectives',
-        choices = tail(glossary$listForPerspectivesSelectize(RV$perspectives), n = 1),
+        choices = glossary$listForPerspectivesSelectize(RV$perspectives)[[1]],
+        #selected = RV$perspectives %>% pull(perspective_id),
         server = TRUE
       )
       
-      desideredPerspectives <- c('concept_id', 
-                                 'concept_title', 
-                                 paste0('selectedByPerspective.', '28'),#input$perspectives), 
-                                 'is_selected',
-                                 'keyword_id',
-                                 'keyword_title')
       RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% 
-        dplyr::select_(.dots = desideredPerspectives)
-      RV$beanLayers <- hub$layersInBean(
-        RV$bean,
-        scale = RV$scale
-      )
+        mutate(is_selected=0)
+      
+      # #activePerspectives<-input$perspectives
+      # # colsWithDesideredPerspectives <- c('concept_id', 
+      # #                            'concept_title', 
+      # #                            activePerspectivesColumns, 
+      # #                            'is_selected',
+      # #                            'keyword_id',
+      # #                            'keyword_title')
+      # # 
+      # # update the bean: put selected perspectives in OR and update selected layers accordingly
+      # RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
+      # 
+      # if(length(input$perspectives)>0){
+      #   activePerspectivesColumns<-paste0('selectedByPerspective.',input$perspectives)
+      #   warning("selected perspectives:", activePerspectivesColumns)
+      #   # #dplyr::select_(.dots = colsWithDesideredPerspectives) 
+      #   RV$bean <- RV$bean %>% 
+      #     mutate(sum=rowSums(.[activePerspectivesColumns]))  %>% 
+      #     mutate(is_selected=as.numeric(sum>0)) %>% dplyr::select(-sum)
+      # }
+      # 
+      # RV$beanLayers <- hub$layersInBean(
+      #   RV$bean,
+      #   scale = RV$scale
+      # )
         
       shinyjs::enable("cities")
       shinyjs::enable("dynamics")
     }
   })
   
+  observeEvent(input$perspectives,{
+    #activePerspectives<-input$perspectives
+    # colsWithDesideredPerspectives <- c('concept_id', 
+    #                            'concept_title', 
+    #                            activePerspectivesColumns, 
+    #                            'is_selected',
+    #                            'keyword_id',
+    #                            'keyword_title')
+    # 
+    # update the bean: put selected perspectives in OR and update selected layers accordingly
+    RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
+    
+    if(length(input$perspectives)>0){
+      activePerspectivesColumns<-paste0('selectedByPerspective.',input$perspectives)
+      warning("selected perspectives:", activePerspectivesColumns)
+      # #dplyr::select_(.dots = colsWithDesideredPerspectives) 
+      RV$bean <- RV$bean %>% 
+        mutate(sum=rowSums(.[activePerspectivesColumns]))  %>% 
+        mutate(is_selected=as.numeric(sum>0)) %>% dplyr::select(-sum)
+    }
+    else{
+      RV$bean <- RV$bean %>% mutate(is_selected=0)
+    }
+    
+    RV$beanLayers <- hub$layersInBean(
+      RV$bean,
+      scale = RV$scale
+    )
+  })
+  
+  {
   output$vbox1 <- renderValueBox({
     valueBox(
       value = tags$h2(RV$selectedMetropolis),
@@ -200,7 +247,8 @@ function(input, output, session) {
   #     "</h4>"
   #   ))
   # })
-  
+  }
+
   output$bean <- renderUI({
     req(RV$bean)
     #add progress here

@@ -401,8 +401,8 @@ getTELLmeGlossary <- function(read_online=TRUE) {
     
     listaFinale<-
       nested_with_namedIntegerColumn %>% pull(dd) %>% set_names(nested_with_namedIntegerColumn %>% pull(dd) )
-    append(list("<select one>"=""),listaFinale)
-    #return(listaFinale)
+    #append(list("<select one>"=""),listaFinale)
+    return(listaFinale)
   }
   
   # do not export the method by perspective by package: it is confusing. We use it only internally
@@ -434,9 +434,9 @@ getTELLmeGlossary <- function(read_online=TRUE) {
   return(self)
 }
 
-if(!FALSE){
+if(FALSE){
   # create offline object instance
-  glossary <- getTELLmeGlossary(read_online = TRUE)
+  glossary <- getTELLmeGlossary(read_online = T)
 }
 if(FALSE){
   
