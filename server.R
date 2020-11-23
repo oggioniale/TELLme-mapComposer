@@ -11,6 +11,18 @@ function(input, output, session) {
   }
   ##
   
+  glossary<-getTELLmeGlossary(read_online=F) #set this to true in production
+  
+  hub<-getTELLmeHub(
+    read_online = TRUE, #set this to true in production
+    TELLMEHUB_URL=TELLMEHUB_URL, 
+    TELLME_HUB_USER = TELLME_HUB_USER, 
+    TELLME_HUB_PASSWORD = TELLME_HUB_PASSWORD, 
+    exportUtilsFunctions = TRUE,
+    writeJJtoDisk = FALSE)
+  
+  
+  
   # output$selectionPrespectives <- renderUI({
   #   pippo <- glossary$listForPerspectivesSelectize(glossary$perspectivesByDynamicId(RV$selectedDynamicID))
   #   selectizeInput(
