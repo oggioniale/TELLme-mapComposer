@@ -39,7 +39,10 @@ function(input, output, session) {
     beanLayers = ''
   )
   
+  RVmessages <- reactiveValues(warning = '')
+  
   observeEvent(input$cities,{
+    RVmessages$warning<-"changed selection of metropolis"
     if(input$cities != 'All metropolis'){
       RV$selectedMetropolis <- input$cities
     } 
@@ -73,6 +76,7 @@ function(input, output, session) {
   })
   
   observeEvent(input$dynamics,{
+    RVmessages$warning<-"changed selection of dynamic"
     if(input$dynamics != '' && input$dynamics != 'Select dynamics'){
       RV$selectedDynamicID <- input$dynamics
     } 
@@ -109,10 +113,27 @@ function(input, output, session) {
       RV$dynamicConceptCount <- record %>% dplyr::select(dynamic_conceptCount) %>% pull()
       RV$perspectives <- glossary$perspectivesByDynamicId(RV$selectedDynamicID)
       
+      #lpersp<-glossary$listForPerspectivesSelectize(RV$perspectives)
+      #browser()
+      
+      numPerspectives<-RV$perspectives %>% filter(!is.na(perspective_id)) %>% nrow()
+      
+      if(numPerspectives){
+        RVmessages$warning<-'No perspective available for the Selected Dynamic'
+      }
+      else{
+        RVmessages$warning<-paste("Number of Perspectives on this Dynamic: ",numPerspectives)
+      }
+      
+      
+      
+      cho<-glossary$listForPerspectivesSelectize(RV$perspectives)#[[1]],
+      #names(cho)<-"perspectives"
+      
       updateSelectizeInput(
         session,
         'perspectives',
-        choices = glossary$listForPerspectivesSelectize(RV$perspectives)[[1]],
+        choices = cho,
         #selected = RV$perspectives %>% pull(perspective_id),
         server = TRUE
       )
@@ -120,31 +141,6 @@ function(input, output, session) {
       RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% 
         mutate(is_selected=0)
       
-      # #activePerspectives<-input$perspectives
-      # # colsWithDesideredPerspectives <- c('concept_id', 
-      # #                            'concept_title', 
-      # #                            activePerspectivesColumns, 
-      # #                            'is_selected',
-      # #                            'keyword_id',
-      # #                            'keyword_title')
-      # # 
-      # # update the bean: put selected perspectives in OR and update selected layers accordingly
-      # RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
-      # 
-      # if(length(input$perspectives)>0){
-      #   activePerspectivesColumns<-paste0('selectedByPerspective.',input$perspectives)
-      #   warning("selected perspectives:", activePerspectivesColumns)
-      #   # #dplyr::select_(.dots = colsWithDesideredPerspectives) 
-      #   RV$bean <- RV$bean %>% 
-      #     mutate(sum=rowSums(.[activePerspectivesColumns]))  %>% 
-      #     mutate(is_selected=as.numeric(sum>0)) %>% dplyr::select(-sum)
-      # }
-      # 
-      # RV$beanLayers <- hub$layersInBean(
-      #   RV$bean,
-      #   scale = RV$scale
-      # )
-        
       shinyjs::enable("cities")
       shinyjs::enable("dynamics")
     }
@@ -184,6 +180,7 @@ function(input, output, session) {
   ignoreNULL  = FALSE,
   ignoreInit = TRUE)
   
+  # colored info panels
   {
   output$vbox1 <- renderValueBox({
     valueBox(
@@ -217,20 +214,21 @@ function(input, output, session) {
     )
   })
   
+  
+  
   output$warning <- renderInfoBox({
-    messageTellMe = ''
     # if (RV$dynamicConceptCount == '0') {
     #   messageTellMe = "No semantic package"
     # }
-    if (!RV$metropolisHasDynamics) {
-      messageTellMe = "No dynamics available for the selected metropolis"
-    } 
-    else {
-      messageTellMe = ""
-    }
+    # if (!RV$metropolisHasDynamics) {
+    #   messageTellMe = "No dynamics available for the selected metropolis"
+    # } 
+    # else {
+    #   messageTellMe = ""
+    # }
     infoBox(
       "Info message", 
-      messageTellMe, 
+      RVmessages$warning, 
       icon = icon("bell"),
       color = "red", 
       fill = TRUE
@@ -253,6 +251,7 @@ function(input, output, session) {
   # })
   }
 
+  # "BEAN" (aka Semantic Package) PANEL
   # when the bean model is updated, the bean panel is updated too.
   output$bean <- renderUI({
     req(RV$bean)
@@ -317,6 +316,8 @@ function(input, output, session) {
     )
   })
   
+  ## Interactive Map ##########################################
+  # 0 step: initialize
   output$map <- leaflet::renderLeaflet({
     # # Create a Progress object
     # progress <- shiny::Progress$new()
@@ -334,14 +335,20 @@ function(input, output, session) {
       leaflet::addTiles()
   })
   
-  ## Interactive Map ##########################################
-  # Create and center the map on the highlighted selected metropolis polygon.
+  # 1st step: Create and center the map on the highlighted selected metropolis polygon.
   observeEvent(RV$selectedMetropolis, {
     if (RV$selectedMetropolis != '') {
       # fitBound of city selected
       #selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == !!RV$selectedMetropolis)
-      selectedCityPolygon <- metropolisPolygons["tellmeCityLabel" == RV$selectedMetropolis]
+      #selectedCityPolygon1 <- metropolisPolygons["tellmeCityLabel" == RV$selectedMetropolis]
+      #bbox1 <- sf::st_bbox(selectedCityPolygon1) %>% as.vector()
+      
+      ###
+      selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == !!RV$selectedMetropolis)
       bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
+      #browser()
+      # sf::st_bbox(metropolisPolygons["tellmeCityLabel" == RV$selectedMetropolis])
+      ###
       
       leaflet::leafletProxy("map", session) %>% 
         clearMarkers() %>%
@@ -379,7 +386,8 @@ function(input, output, session) {
     }
   })
   
-  # the set of the available layers for the current selection in the bean is shown
+  # 2nd step: MAP COMPOSITION
+  # the set of the available layers for the current selection in the bean is shown in the map
   observeEvent(RV$beanLayers, {
     #message(RV$beanLayers)
     if (typeof(RV$beanLayers)=="list" && dim(RV$beanLayers)[1] > 0 )  {

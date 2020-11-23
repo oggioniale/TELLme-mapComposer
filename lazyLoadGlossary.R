@@ -391,6 +391,7 @@ getTELLmeGlossary <- function(read_online=TRUE) {
   self$listForPerspectivesSelectize<-function(input){
     #input <- perspectivesByDynamicId(dynamicId)
     # per farlo in un solo passaggio posso creare una nuova colonna con questa funzione di appoggio
+    #browser()
     my_fx<-function(tb){tb$perspective_id %>% set_names(tb$perspective_title)}
     
     nested<-input %>% 
@@ -401,7 +402,8 @@ getTELLmeGlossary <- function(read_online=TRUE) {
     
     listaFinale<-
       nested_with_namedIntegerColumn %>% pull(dd) %>% set_names(nested_with_namedIntegerColumn %>% pull(dd) )
-    #append(list("<select one>"=""),listaFinale)
+    names(listaFinale)<-"perspectives"
+    #append(list("<no selected perspective>"=""),listaFinale)
     return(listaFinale)
   }
   
