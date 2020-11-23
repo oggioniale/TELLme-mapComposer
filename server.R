@@ -339,8 +339,10 @@ function(input, output, session) {
   observeEvent(RV$selectedMetropolis, {
     if (RV$selectedMetropolis != '') {
       # fitBound of city selected
-      selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == !!RV$selectedMetropolis)
+      #selectedCityPolygon <- metropolisPolygons %>% dplyr::filter(tellmeCityLabel == !!RV$selectedMetropolis)
+      selectedCityPolygon <- metropolisPolygons["tellmeCityLabel" == RV$selectedMetropolis]
       bbox <- sf::st_bbox(selectedCityPolygon) %>% as.vector()
+      
       leaflet::leafletProxy("map", session) %>% 
         clearMarkers() %>%
         leaflet::addPolygons(
