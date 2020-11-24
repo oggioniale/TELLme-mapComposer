@@ -99,7 +99,7 @@ function(input, output, session) {
       progress <- shiny::Progress$new()
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
-      progress$set(message = "Loading data...", value = 0)
+      progress$set(message = "Loading perspectives from TELLme MGIP Glossary software...", value = 0)
       
       shinyjs::disable("cities")
       shinyjs::disable("dynamics")
@@ -118,8 +118,8 @@ function(input, output, session) {
       
       numPerspectives<-RV$perspectives %>% filter(!is.na(perspective_id)) %>% nrow()
       
-      if(numPerspectives){
-        RVmessages$warning<-'No perspective available for the Selected Dynamic'
+      if(numPerspectives==0){
+        RVmessages$warning<-'No Perspective available for the Selected Dynamic'
       }
       else{
         RVmessages$warning<-paste("Number of Perspectives on this Dynamic: ",numPerspectives)
@@ -149,16 +149,10 @@ function(input, output, session) {
   # when perspectives are chosen, the bean model is updated with the selected concepts, 
   # and the set of the available layers for the current selection is computed.
   observeEvent(input$perspectives,{
-    #activePerspectives<-input$perspectives
-    # colsWithDesideredPerspectives <- c('concept_id', 
-    #                            'concept_title', 
-    #                            activePerspectivesColumns, 
-    #                            'is_selected',
-    #                            'keyword_id',
-    #                            'keyword_title')
-    # 
-    # update the bean: put selected perspectives in OR and update selected layers accordingly
-    #RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID)
+    progress <- shiny::Progress$new()
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = "Retrieving available layers from TELLme-Hub...", value = 0)
     
     if(length(input$perspectives)>0){
       activePerspectivesColumns<-paste0('selectedByPerspective.',input$perspectives)
@@ -171,6 +165,8 @@ function(input, output, session) {
     else{
       RV$bean <- glossary$beanWithPerspectivesByDynamicId_tibble(RV$selectedDynamicID) %>% mutate(is_selected=0)
     }
+    progress$inc(amount = 0.5)
+    
     
     RV$beanLayers <- hub$layersInBean(
       RV$bean %>% dplyr::filter(is_selected>0),
@@ -259,7 +255,7 @@ function(input, output, session) {
     progress <- shiny::Progress$new()
     # Make sure it closes when we exit this reactive, even if there's an error
     on.exit(progress$close())
-    progress$set(message = "Loading semantic package from TELLme Glossary software...", value = 0)
+    progress$set(message = "Loading semantic package from TELLme MGIP Glossary software...", value = 0)
 
     gg <- RV$bean %>%
       dplyr::group_by(keyword_id, keyword_title) %>%
@@ -272,7 +268,12 @@ function(input, output, session) {
     htmlUlConcept <- htmltools::tags$ul(
       class = "ul_tellme_concepts"
     )
+    
     for (i in 1:nrow(gg)) {
+      
+      progress$inc(message = "Loading semantic package from TELLme MGIP Glossary software...", 
+                   amount=1/nrow(gg))
+      
       for (j in 1:nrow(gg[i,]$data[[1]])) {
         htmlUlConcept <- htmltools::tagAppendChildren(
           htmlUlConcept,
