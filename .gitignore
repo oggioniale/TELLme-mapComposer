@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+_not_in_git
+accounts_private.R
+env
+_*
