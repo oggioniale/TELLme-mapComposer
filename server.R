@@ -36,13 +36,14 @@ function(input, output, session) {
     selectedDynamicID = '',
     perspectives = list(),
     bean = '',
-    beanLayers = ''
+    beanLayers = '',
+    numPerspectives = ''
   )
   
-  RVmessages <- reactiveValues(warning = '')
+  # TODO: warning is never changed. warningPerspectives is updated but never used. Consider refactor the code deleting what is not necessary.
+  RVmessages <- reactiveValues(warning = 'No Dynamic for this metropolis', warningPerspectives='')
   
   observeEvent(input$cities,{
-    RVmessages$warning<-"changed selection of metropolis"
     if(input$cities != 'All metropolis'){
       RV$selectedMetropolis <- input$cities
     } 
@@ -75,8 +76,17 @@ function(input, output, session) {
     }
   })
   
+  # toggle warning visibility
+  observeEvent(RV$metropolisHasDynamics,{
+    if(!RV$metropolisHasDynamics){
+      shinyjs::show("warning")
+    }
+    else{
+      shinyjs::hide("warning")
+    }
+  }, ignoreInit = TRUE)
+  
   observeEvent(input$dynamics,{
-    RVmessages$warning<-"changed selection of dynamic"
     if(input$dynamics != '' && input$dynamics != 'Select dynamics'){
       RV$selectedDynamicID <- input$dynamics
     } 
@@ -117,12 +127,13 @@ function(input, output, session) {
       #browser()
       
       numPerspectives<-RV$perspectives %>% filter(!is.na(perspective_id)) %>% nrow()
+      RV$numPerspectives=numPerspectives
       
       if(numPerspectives==0){
-        RVmessages$warning<-'No Perspective available for the Selected Dynamic'
+        RVmessages$warningPerspectives<-'No Perspective available for the Selected Dynamic'
       }
       else{
-        RVmessages$warning<-paste("Number of Perspectives on this Dynamic: ",numPerspectives)
+        RVmessages$warningPerspectives<-paste("Number of Perspectives on this Dynamic: ",numPerspectives)
       }
       
       
@@ -211,22 +222,12 @@ function(input, output, session) {
   })
   
   
-  
   output$warning <- renderInfoBox({
-    # if (RV$dynamicConceptCount == '0') {
-    #   messageTellMe = "No semantic package"
-    # }
-    # if (!RV$metropolisHasDynamics) {
-    #   messageTellMe = "No dynamics available for the selected metropolis"
-    # } 
-    # else {
-    #   messageTellMe = ""
-    # }
     infoBox(
-      "Info message", 
-      RVmessages$warning, 
+      "Info message",
+      RVmessages$warning,
       icon = icon("bell"),
-      color = "red", 
+      color = "red",
       fill = TRUE
     )
   })

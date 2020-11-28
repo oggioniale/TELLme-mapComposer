@@ -73,16 +73,15 @@ dashboardPagePlus(
                                       selected = NULL
                        ),
                        fluidRow(
-                         valueBoxOutput("vbox1", width = 4),
-                         valueBoxOutput("vbox2", width = 8)
+                         valueBoxOutput("vbox1", width = 5),
+                         valueBoxOutput("vbox2", width = 7)
+                       ),
+                       fluidRow(
+                         hidden(valueBoxOutput("warning", width = 12))
                        ),
                        fluidRow(
                          valueBoxOutput("vbox3", width = 3),
                          valueBoxOutput("vbox4", width = 9)
-                       ),
-                       conditionalPanel(
-                         condition = "!RV$metropolisHasDynamics",
-                         infoBoxOutput("warning", width = 12)
                        )
                      ),
                      tabPanel(
