@@ -1,8 +1,6 @@
 require(jqr); require(httr); require(dplyr); require(jsonlite); require(dtplyr); require(purrr); require(tidyr);require(rvest)
-TELLMEHUB_URL<-'http://tellmehub.get-it.it/'
-source("accounts_private.R")
+#TELLMEHUB_URL<-'http://tellmehub.get-it.it/'
 
-#printHeader<-function(x){x %>% as_tibble()%>% colnames() %>% paste(collapse=", ")}
 `%notin%` <<- Negate(`%in%`)
 
 getTELLmeHub <- function(read_online=TRUE, 
@@ -970,44 +968,3 @@ if(FALSE){
     writeJJtoDisk = FALSE,
     exportAdminFunctions = TRUE)
 }
-if(FALSE){ #EXAMPLE USAGE of $admin functions
-  # the_concept_id=77
-  # output_newLayer<-hub$admin$getit_uploadLayer(zipname_and_path = "prova.zip",layertitle = "prova")
-  # #status
-  # #getit_layername
-  # #geoserver_layername
-  # #getit_layerurl
-  # #response
-  # if(output_newLayer$status==200){
-  #   lname<-output_newLayer$getit_layername
-  #   hub$admin$layername_set_conceptid(lname, the_concept_id)
-  # }
-  
-  # res<-hub$admin$mapid_set_protocol(485,1)
-  # (res %>% content())$success
-  # 
-  # #http://tellmehub.get-it.it/tellme/layers/geonode:areas_geoestadisticas_municipales/set_conceptid/77
-  res<-hub$admin$layername_set_conceptid(layername = "geonode:areas_geoestadisticas_municipales", concept_id = 77,add=FALSE)
-  # res %>% content()
-  uploadedLayerOutput<-hub$admin$getit_uploadLayer(zipname_and_path = "./_trash/layerprova/PROVAPROVA/Archivio.zip",layertitle = "PROVAPROVA",the_abstract = "UPLOAD_TEST")
-  
-  if(uploadedLayerOutput$status==200)
-    print("success")
-  else
-    print("failure")
-    
-  
-  getit_updatelayers(getit_url = "http://tellmehub.get-it.it", getit_superuser = "admin", getit_password = "admin", workspacename = "geonode", datastorename = "geonode_data",layername = "provaprova", ownername = "admin")
-  
-  #hub$admin$getit_uploadLayer()
-  # TODO: when upload is done correctly reload the hub object
-  #         hub$refresh(online = TRUE)
-  #       ** or add lines in internal datatables **
-  # TODO: upload new style: 
-  #   http://tellmehub.get-it.it/layers/geonode:gua_ran_nucleosagrarios_1/style_upload (?)
-  # Follow the http workflow and implement it (rvest?)
-  # TODO: manage styles: add existing style to layer, set layer default style, 
-  #   /gs/geonode:gua_ran_nucleosagrarios_1/style/manage (POST FORM)
-  # Same as previous, or consider using geoserver directly (cf. utils.R) after evaluating behaviour of geonode sw layer.
-}
-

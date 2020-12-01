@@ -1,0 +1,31 @@
+### set-up accounts.
+
+### TELLme MGIP Glossary software
+# URL of the MGIP Glossary software (TELLme glossary and up-to-date dynamics and perspectives definition)
+
+TELLME_GLOSSARY_URL = "http://www.tellme.polimi.it/tellme_apps/tellme/"
+
+# You need an account with permission to read the url here below.
+# in order to retrieve information on dynamics and perspectives 
+# that are not publicly exposed.
+TELLME_GLOSSARY_PASSWORD=
+TELLME_GLOSSARY_USER=
+
+# if you obtained an account which can not read the /export endpoint on the previous url, 
+# you can use a cached version (online=false) that could be outdated, but which could let you test the app.
+TELLME_GLOSSARY_READONLINE=TRUE
+
+### TELLme-Hub
+# URL of the TELLme-Hub (layers)
+TELLMEHUB_URL=http://tellmehub.get-it.it/
+
+# Account to authenticate in TELLme-Hub.
+# Even if the app does not write to TELLme-HUB,
+# in order to retrieve remote services (WMS) urls from tellmehub,
+# an administrative account is needed
+TELLME_HUB_USER=
+TELLME_HUB_PASSWORD=
+
+# if you cannot obtain an account 
+# you can test the app by using the cached version (online=false)
+TELLME_HUB_READONLINE=TRUE
