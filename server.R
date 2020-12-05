@@ -182,7 +182,15 @@ function(input, output, session) {
     RV$beanLayers <- hub$layersInBean(
       RV$bean %>% dplyr::filter(is_selected>0),
       scale = RV$scale
-    )
+    ) 
+    #%>% 
+      # dplyr::mutate(sortcolumr=dplyr::case_when(layer_geomType=="raster"~1,
+      #                                           layer_geomType=="gml:MultiSurfacePropertyType"~2,
+      #                                           layer_geomType=="gml:MultiLineStringPropertyType"~3,
+      #                                           layer_geomType=="gml:PointPropertyType"~4,
+      #                                           TRUE ~ 5)) %>%
+      # dplyr::arrange(sortcolumr) 
+    message("beanLayers done")
   },
   ignoreNULL  = FALSE,
   ignoreInit = TRUE)

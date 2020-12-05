@@ -726,13 +726,21 @@ getTELLmeHub <- function(read_online=TRUE,
       dplyr::select(-layer_api_uri, -layer_name, -layer_title, -layer_alternate)
     #browser()
     if(dim(x1)[1]>0){
-      x1<-x1 %>% getGeometryTypesForLayerSet()
+      x1<-x1 %>% getGeometryTypesForLayerSet() %>% 
+        dplyr::mutate(sortcolum1=dplyr::case_when(
+          layer_geomType=="raster"~1,
+          layer_geomType=="gml:MultiSurfacePropertyType"~2,
+          layer_geomType=="gml:MultiLineStringPropertyType"~3,
+          layer_geomType=="gml:PointPropertyType"~4,
+          TRUE ~ 5)) %>%
+        dplyr::mutate(sortcolum2=dplyr::case_when( # adjust order for specific base layers
+          concept_id==54  ~1, # elevation
+          concept_id==7   ~2, # slope
+          keyword_id==5   ~3, # physiography
+          TRUE            ~4)) %>% 
+        dplyr::arrange(sortcolum1, sortcolum2)
     }
     x1
-    
-    
-    #hub$layersInBean(glossary$beanWithPerspectivesByDynamicId_tibble(21),scale="M") 
-    #   %>% hub$getGeometryTypesForLayerSet()
   }
   
   info[["beanWithlayers"]]<-"INPUT: a Bean and a (tellme)scale [e.g. \"XL\" or \"L\"] \n
