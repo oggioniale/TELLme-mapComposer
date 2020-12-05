@@ -16,22 +16,55 @@ library(shinyjs)
 library(leaflet)
 library(dplyr)
 
+apptitle="TELLme Erasmus+ Project - Dynamics and Perspectives map"
+appdoi="https://doi.org/10.5281/zenodo.4108649"
+
+panels.about_text<- shiny::tabPanel("About",
+  h4("Description"),
+  p("Compose maps of metropolitan dynamics according to the perspectives in the ",a("TELLme Glossary and MGIP tool.",href="www.tellme.polimi.it/tellme_apps/tellme/", target="_blank")),
+  h4("Usage"), 
+  div(style="font-size:smaller;",
+      p("1. In the Metropolis panel select one of the Metropolis of the TELLme Project."),
+      #div(class="leaflet-draw-toolbar leaflet-bar leaflet-draw-toolbar-top",
+      #                a(style="float:left; margin-right:2px;", class="leaflet-draw-draw-rectangle")),
+      p("2. Select the dynamic you are interested in. <span style=\"font-size:smaller;\">(Dynamics are retrieved dyrectly from the external system MGIP Glossary Software)</span> "),
+      p("3. In the Semantic Package panel you can see the keywords and concepts associated to the metropolitan dynamic of your choice. "),
+      p("4. Select, if available, one or more perspectives (also called \"zone of reading\") on the metropolitan dynamic. ", 
+        "These are selection of TELLme concepts made by users in the", a("TELLme Glossary and MGIP tool.",href="www.tellme.polimi.it/tellme_apps/tellme/", target="_blank"),
+        "The concepts selected in a perspective are highlighted in the \"Semantic Package\" box. ",
+        "The software then perform queries on the TELLme-Hub catalog, ",
+        "looks for the available geospatial informative layers pertinent to the the Dynamic and to the chosen Perspectives ",
+        "and retrieves the layers from the WMS services referred in the TELLme-Hub.")
+      ,h4("Credits"), 
+      p("Application developed for the TELLme ERASMUS+ project, O4. See",
+        a("source code repository on github",
+          href="https://github.com/oggioniale/TELLme-mapComposer", 
+          target="_blank")
+      ),
+      p("Please cite:", 
+        a("DOI: 10.5281/zenodo.4108649",
+          href=appdoi,
+          target="_blank")
+      )
+  )
+)
+
 dashboardPagePlus(
   skin = "black-light",
   collapse_sidebar = FALSE,
-  #sidebar_fullCollapse=TRUE,
+  sidebar_fullCollapse=TRUE,
   dashboardHeaderPlus(
     title = tagList(
       tags$div(class = "logo-lg",
                tags$img(src = "http://tellmehub.get-it.it/static/img/logo1_200px.png", width = "80px", height = "40px"),
-               tags$span("TELLme Erasmus+ Project - Dynamics and Prespective map")
+               tags$span(apptitle)
       )
     )
   ),
   sidebar = dashboardSidebar(
     # id = "left_sidebar",
-    collapsed = FALSE,
-    disable = FALSE,
+    collapsed = TRUE,
+    disable = TRUE,
     width = 0,
     sidebarMenu(
       menuItem("Elaboration", tabName = "site", icon = icon("map", lib = "font-awesome"))
@@ -54,7 +87,7 @@ dashboardPagePlus(
           id = "controls", class = "panel panel-default", fixed = FALSE,
           draggable = TRUE, top = 60, left = 60, right = "auto", bottom = "auto",
           width = 500, height = "auto",
-          HTML('<br><button data-toggle="collapse" data-target="#selectMetropolis"><b>-</b></button>'),
+          HTML('<br><button data-toggle="collapse" data-target="#selectMetropolis"><b>-</b></button><span>',apptitle,'</span>'),
           tags$div(id = 'selectMetropolis', class="collapse",
                    tabsetPanel(
                      tabPanel(
@@ -102,7 +135,8 @@ dashboardPagePlus(
                        # uiOutput(outputId = 'selectionPrespectives'),
                        tags$p(),
                        htmlOutput(outputId = 'bean')
-                     )
+                     ),
+                     panels.about_text
                    )
           )
     )
