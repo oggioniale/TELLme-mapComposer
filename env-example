@@ -3,7 +3,7 @@
 ### TELLme MGIP Glossary software
 # URL of the MGIP Glossary software (TELLme glossary and up-to-date dynamics and perspectives definition)
 
-TELLME_GLOSSARY_URL=http://www.tellme.polimi.it/tellme_apps/tellme/
+TELLME_GLOSSARY_URL=http://www.tellme.polimi.it/tellme_apps/tellme/export
 
 # You need an account with permission to read the url here below.
 # in order to retrieve information on dynamics and perspectives 
