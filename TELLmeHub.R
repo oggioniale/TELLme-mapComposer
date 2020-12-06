@@ -256,7 +256,7 @@ getTELLmeHub <- function(read_online=TRUE,
     getFeatureTypeGeometry<-function(featureTypeName,wfsUrl){
       if(wfsUrl=="") return(NA)
       require(xml2)
-      res=""
+      res="raster"
       tryCatch(
         {
           url=sprintf("%s?service=WFS&version=1.1.0&request=DescribeFeatureType&typename=%s",wfsUrl,featureTypeName)
@@ -277,7 +277,7 @@ getTELLmeHub <- function(read_online=TRUE,
             res=geomtype[[1]]
         }, 
         error=function(e){
-          warning("getFeatureTypeGeometry failed")
+          warning("getFeatureTypeGeometry failed presuming raster")
         },
         finally = {}
       )
