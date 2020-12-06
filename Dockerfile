@@ -3,28 +3,22 @@ FROM ptagliolato/r-spatial-base:1.0.2
 # refer to it for any detail
 
 # copy shiny app files
-RUN mkdir /root/TELLme-mapComposer
-RUN mkdir /root/TELLme-mapComposer/offline_files
-RUN mkdir /root/TELLme-mapComposer/cityGeojson
-RUN mkdir /root/TELLme-mapComposer/www
-RUN mkdir /root/TELLme-mapComposer/www/icons
-RUN mkdir /root/TELLme-mapComposer/www/css
-
 COPY README.md root/TELLme-mapComposer/README.md
 COPY server.R root/TELLme-mapComposer/server.R
 COPY global.R root/TELLme-mapComposer/global.R
 COPY ui.R root/TELLme-mapComposer/ui.R
 COPY lazyLoadGlossary.R root/TELLme-mapComposer/lazyLoadGlossary.R
 COPY TELLmeHub.R root/TELLme-mapComposer/TELLmeHub.R
+# www stuff
 COPY www/css/style.css root/TELLme-mapComposer/www/css/style.css
 COPY www/icons/logo-tellme-1.jpg root/TELLme-mapComposer/www/icons/logo-tellme-1.jpg
+# metropolis layers
 COPY cityGeojson/dt_Metropolis.rds root/TELLme-mapComposer/cityGeojson/dt_Metropolis.rds
 COPY cityGeojson/dt_Metropolis.gpkg root/TELLme-mapComposer/cityGeojson/dt_Metropolis.gpkg
 COPY cityGeojson/citiesGPS.gpkg root/TELLme-mapComposer/cityGeojson/citiesGPS.gpkg
 COPY cityGeojson/metropolis2.gpkg root/TELLme-mapComposer/cityGeojson/metropolis2.gpkg
-
-# TODO: Substitute with env file
-COPY accounts_private.R root/TELLme-mapComposer/accounts_private.R
+# offline cached files
+COPY offline_files/ root/TELLme-mapComposer/offline_files
 
 # set shiny listen on port 3838 with Rprofile.site provided
 COPY Rprofile.site /usr/lib/R/etc/
@@ -40,9 +34,9 @@ LABEL maintainer="ptagliolato <tagliolato.p@irea.cnr.it>" \
 
 ##### USAGE:
 # build the image:
-#   docker build -t tellme-vlab-mapcomposer:1.0.0 .
+#   docker build -t tellme-vlab-mapcomposer:<version> .
 # run the container:
-#   docker run -it --rm --env-file=env -p 3838:3838 tellme-vlab-mapcomposer:1.0.0
+#   docker run --rm --env-file=env -p 3838:3838 tellme-vlab-mapcomposer:<version>
 # open your browser (if you are runnung the container in your machine) at the url:
 #   http://127.0.0.1:3838/
 #####
